@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 # CONFIGURACIÓN DE PÁGINA ANCHA (TERMINAL STYLE)
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="Tablero Máximo | Sniper & Intelligence Terminal",
+    page_title="Tablero Máximo | Sniper & Intelligence Cockpit",
     page_icon="🏛️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -24,63 +24,295 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 1. UNIVERSO MAESTRO CATEGORIZADO
+# 1. UNIVERSO MAESTRO COMPLETO Y ESCALA CUALITATIVA SNIPER
 # ---------------------------------------------------------
 UNIVERSO = [
     # Hyperscalers & Big Tech
-    {"ticker": "GOOG", "nombre": "Alphabet Inc.", "sector": "Hyperscalers & Big Tech", "arquetipo": "ESTANDAR"},
-    {"ticker": "MSFT", "nombre": "Microsoft Corp.", "sector": "Hyperscalers & Big Tech", "arquetipo": "ESTANDAR"},
-    {"ticker": "AMZN", "nombre": "Amazon.com Inc.", "sector": "Hyperscalers & Big Tech", "arquetipo": "ESTANDAR"},
-    {"ticker": "META", "nombre": "Meta Platforms", "sector": "Hyperscalers & Big Tech", "arquetipo": "ESTANDAR"},
-    {"ticker": "AAPL", "nombre": "Apple Inc.", "sector": "Hyperscalers & Big Tech", "arquetipo": "ESTANDAR"},
-    # AI Compute, Semis & Cuasimonopolios
-    {"ticker": "NVDA", "nombre": "NVIDIA Corp.", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR"},
-    {"ticker": "AMD", "nombre": "Advanced Micro Devices", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR"},
-    {"ticker": "TSM", "nombre": "Taiwan Semiconductor (TSMC)", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR"},
-    {"ticker": "ASML", "nombre": "ASML Holding", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR"},
-    {"ticker": "MU", "nombre": "Micron Technology", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR"},
-    {"ticker": "AVGO", "nombre": "Broadcom Inc.", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR"},
-    {"ticker": "LITE", "nombre": "Lumentum Holdings", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR"},
+    {"ticker": "NVDA", "nombre": "NVIDIA Corp.", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "MU", "nombre": "Micron Technology", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "AMD", "nombre": "Advanced Micro Devices", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "AVGO", "nombre": "Broadcom Inc.", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "TSM", "nombre": "Taiwan Semiconductor (TSMC)", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "PLTR", "nombre": "Palantir Technologies", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "CRWD", "nombre": "CrowdStrike Holdings", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "NET", "nombre": "Cloudflare Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "APP", "nombre": "AppLovin Corp.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "HOOD", "nombre": "Robinhood Markets", "sector": "Finanzas & FinTech", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "VST", "nombre": "Vistra Corp.", "sector": "Energía AI & Nuclear", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "VRT", "nombre": "Vertiv Holdings", "sector": "Energía AI & Nuclear", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "AMZN", "nombre": "Amazon.com Inc.", "sector": "Hyperscalers & Big Tech", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "META", "nombre": "Meta Platforms", "sector": "Hyperscalers & Big Tech", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "GOOG", "nombre": "Alphabet Inc. (Class C)", "sector": "Hyperscalers & Big Tech", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "GOOGL", "nombre": "Alphabet Inc. (Class A)", "sector": "Hyperscalers & Big Tech", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "MSFT", "nombre": "Microsoft Corp.", "sector": "Hyperscalers & Big Tech", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "AAPL", "nombre": "Apple Inc.", "sector": "Hyperscalers & Big Tech", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "BABA", "nombre": "Alibaba Group", "sector": "Hyperscalers & Big Tech", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    
+    # AI Compute, Semis & Hardware
+    {"ticker": "AAOI", "nombre": "Applied Optoelectronics", "sector": "AI Compute & Semis", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "ADI", "nombre": "Analog Devices", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "ALAB", "nombre": "Astera Labs", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "ALMU", "nombre": "Aeluma Inc.", "sector": "AI Compute & Semis", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "AMAT", "nombre": "Applied Materials", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "AMKR", "nombre": "Amkor Technology", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "ARM", "nombre": "ARM Holdings", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "ASML", "nombre": "ASML Holding", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "AXTI", "nombre": "AXT Inc.", "sector": "AI Compute & Semis", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "COHR", "nombre": "Coherent Corp.", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "CRDO", "nombre": "Credo Technology", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "GFS", "nombre": "GlobalFoundries", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "INTC", "nombre": "Intel Corp.", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🔴 Rojo"},
+    {"ticker": "KLAC", "nombre": "KLA Corp.", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "LAM", "nombre": "Lam Research Corp.", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "LASR", "nombre": "nLIGHT Inc.", "sector": "AI Compute & Semis", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "LITE", "nombre": "Lumentum Holdings", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "LRCX", "nombre": "Lam Research", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "LSCC", "nombre": "Lattice Semiconductor", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "MCHP", "nombre": "Microchip Technology", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "MRVL", "nombre": "Marvell Technology", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "MTSI", "nombre": "MACOM Technology Solutions", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "NVTS", "nombre": "Navitas Semiconductor", "sector": "AI Compute & Semis", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "NXP", "nombre": "NXP Semiconductors", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "ONTO", "nombre": "Onto Innovation", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "POET", "nombre": "POET Technologies", "sector": "AI Compute & Semis", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "QCOM", "nombre": "Qualcomm Inc.", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "RMBS", "nombre": "Rambus Inc.", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "SIMO", "nombre": "Silicon Motion", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "SITM", "nombre": "SiTime Corp.", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "SLAB", "nombre": "Silicon Laboratories", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "SMCI", "nombre": "Super Micro Computer", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🔴 Rojo"},
+    {"ticker": "SNPS", "nombre": "Synopsys Inc.", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "TER", "nombre": "Teradyne Inc.", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "TXN", "nombre": "Texas Instruments", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "VIAV", "nombre": "Viavi Solutions", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "VPG", "nombre": "Vishay Precision Group", "sector": "AI Compute & Semis", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    
     # SaaS, Ciberseguridad & AI Platforms
-    {"ticker": "PLTR", "nombre": "Palantir Technologies", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR"},
-    {"ticker": "CRWD", "nombre": "CrowdStrike Holdings", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR"},
-    {"ticker": "PANW", "nombre": "Palo Alto Networks", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR"},
-    {"ticker": "NOW", "nombre": "ServiceNow Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR"},
-    {"ticker": "CRM", "nombre": "Salesforce Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR"},
-    {"ticker": "ORCL", "nombre": "Oracle Corp.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR"},
-    # Energía para IA, SMRs & Infraestructura
-    {"ticker": "VST", "nombre": "Vistra Corp.", "sector": "Energía AI & Nuclear", "arquetipo": "ESTANDAR"},
-    {"ticker": "CEG", "nombre": "Constellation Energy", "sector": "Energía AI & Nuclear", "arquetipo": "ESTANDAR"},
-    {"ticker": "VRT", "nombre": "Vertiv Holdings", "sector": "Energía AI & Nuclear", "arquetipo": "ESTANDAR"},
-    {"ticker": "ETN", "nombre": "Eaton Corp.", "sector": "Energía AI & Nuclear", "arquetipo": "ESTANDAR"},
-    {"ticker": "OKLO", "nombre": "Oklo Inc.", "sector": "Energía AI & Nuclear", "arquetipo": "GROWTH_PRE_PROFIT"},
-    {"ticker": "SMR", "nombre": "NuScale Power", "sector": "Energía AI & Nuclear", "arquetipo": "GROWTH_PRE_PROFIT"},
-    # Espacio & Robótica
-    {"ticker": "RKLB", "nombre": "Rocket Lab USA", "sector": "Espacio & Robótica", "arquetipo": "GROWTH_PRE_PROFIT"},
-    {"ticker": "ISRG", "nombre": "Intuitive Surgical", "sector": "Espacio & Robótica", "arquetipo": "ESTANDAR"},
-    {"ticker": "SERV", "nombre": "Serve Robotics", "sector": "Espacio & Robótica", "arquetipo": "GROWTH_PRE_PROFIT"},
+    {"ticker": "ACN", "nombre": "Accenture plc", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "ADBE", "nombre": "Adobe Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "ADP", "nombre": "Automatic Data Processing", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "ANET", "nombre": "Arista Networks", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "CRM", "nombre": "Salesforce Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "CSCO", "nombre": "Cisco Systems", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "DDOG", "nombre": "Datadog Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "DSY.PA", "nombre": "Dassault Systemes", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "FDS", "nombre": "FactSet Research Systems", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "FICO", "nombre": "Fair Isaac Corp.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "FRSH", "nombre": "Freshworks Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "FTNT", "nombre": "Fortinet Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "IBM", "nombre": "International Business Machines", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "INFQ", "nombre": "Infinera Corp.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "NOW", "nombre": "ServiceNow Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "OKTA", "nombre": "Okta Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "ORCL", "nombre": "Oracle Corp.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "PANW", "nombre": "Palo Alto Networks", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "PATH", "nombre": "UiPath Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🔴 Rojo"},
+    {"ticker": "PEGA", "nombre": "Pegasystems Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "PTC", "nombre": "PTC Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "RBLX", "nombre": "Roblox Corp.", "sector": "SaaS & Ciberseguridad", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "RDDT", "nombre": "Reddit Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "ROKU", "nombre": "Roku Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "SHOP", "nombre": "Shopify Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "SNOW", "nombre": "Snowflake Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "SPOT", "nombre": "Spotify Technology", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "TOST", "nombre": "Toast Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "TTD", "nombre": "The Trade Desk", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "UI", "nombre": "Ubiquiti Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "WDAY", "nombre": "Workday Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "WKL.AS", "nombre": "Wolters Kluwer", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "ZETA", "nombre": "Zeta Global Holdings", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "ZS", "nombre": "Zscaler Inc.", "sector": "SaaS & Ciberseguridad", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    
+    # Energía AI & Nuclear
+    {"ticker": "APLD", "nombre": "Applied Digital Corp.", "sector": "Energía AI & Nuclear", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "BE", "nombre": "Bloom Energy", "sector": "Energía AI & Nuclear", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "BWXT", "nombre": "BWX Technologies", "sector": "Energía AI & Nuclear", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "CCJ", "nombre": "Cameco Corp.", "sector": "Energía AI & Nuclear", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "CEG", "nombre": "Constellation Energy", "sector": "Energía AI & Nuclear", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "CIFR", "nombre": "Cipher Mining", "sector": "Energía AI & Nuclear", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "CLSK", "nombre": "CleanSpark Inc.", "sector": "Energía AI & Nuclear", "arquetipo": "ESTANDAR", "sniper": "🔴 Rojo"},
+    {"ticker": "ETN", "nombre": "Eaton Corp.", "sector": "Energía AI & Nuclear", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "FSLR", "nombre": "First Solar Inc.", "sector": "Energía AI & Nuclear", "arquetipo": "ESTANDAR", "sniper": "🔴 Rojo"},
+    {"ticker": "GEV", "nombre": "GE Vernova", "sector": "Energía AI & Nuclear", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "IREN", "nombre": "Iris Energy", "sector": "Energía AI & Nuclear", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "LEU", "nombre": "Centrus Energy", "sector": "Energía AI & Nuclear", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "LTBR", "nombre": "Lightbridge Corp.", "sector": "Energía AI & Nuclear", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "NBIS", "nombre": "Nebius Group", "sector": "Energía AI & Nuclear", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "NEE", "nombre": "NextEra Energy", "sector": "Energía AI & Nuclear", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "NRG", "nombre": "NRG Energy", "sector": "Energía AI & Nuclear", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "OKLO", "nombre": "Oklo Inc.", "sector": "Energía AI & Nuclear", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "PWR", "nombre": "Quanta Services", "sector": "Energía AI & Nuclear", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "SMR", "nombre": "NuScale Power", "sector": "Energía AI & Nuclear", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "SRE", "nombre": "Sempra", "sector": "Energía AI & Nuclear", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "STRL", "nombre": "Sterling Infrastructure", "sector": "Energía AI & Nuclear", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "UUUU", "nombre": "Energy Fuels Inc.", "sector": "Energía AI & Nuclear", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    
+    # Espacio, Robótica & Drones
+    {"ticker": "ACHR", "nombre": "Archer Aviation", "sector": "Espacio & Robótica", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "AEVA", "nombre": "Aeva Technologies", "sector": "Espacio & Robótica", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "ARQQ", "nombre": "Arqit Quantum", "sector": "Espacio & Robótica", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "ASTS", "nombre": "AST SpaceMobile", "sector": "Espacio & Robótica", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "AVAV", "nombre": "AeroVironment Inc.", "sector": "Espacio & Robótica", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "CGNX", "nombre": "Cognex Corp.", "sector": "Espacio & Robótica", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "FARO", "nombre": "FARO Technologies", "sector": "Espacio & Robótica", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "GHM", "nombre": "Graham Corp.", "sector": "Espacio & Robótica", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "GILT", "nombre": "Gilat Satellite Networks", "sector": "Espacio & Robótica", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "IRDM", "nombre": "Iridium Communications", "sector": "Espacio & Robótica", "arquetipo": "ESTANDAR", "sniper": "🔴 Rojo"},
+    {"ticker": "ISRG", "nombre": "Intuitive Surgical", "sector": "Espacio & Robótica", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "LAZR", "nombre": "Luminar Technologies", "sector": "Espacio & Robótica", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "LLAP", "nombre": "Terran Orbital", "sector": "Espacio & Robótica", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "LUNR", "nombre": "Intuitive Machines", "sector": "Espacio & Robótica", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "OII", "nombre": "Oceaneering International", "sector": "Espacio & Robótica", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "ONDS", "nombre": "Ondas Holdings", "sector": "Espacio & Robótica", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "OUST", "nombre": "Ouster Inc.", "sector": "Espacio & Robótica", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "PL", "nombre": "Planet Labs PBC", "sector": "Espacio & Robótica", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "RDW", "nombre": "Redwire Corp.", "sector": "Espacio & Robótica", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "RKLB", "nombre": "Rocket Lab USA", "sector": "Espacio & Robótica", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "ROK", "nombre": "Rockwell Automation", "sector": "Espacio & Robótica", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "SATS", "nombre": "EchoStar Corp.", "sector": "Espacio & Robótica", "arquetipo": "ESTANDAR", "sniper": "🔴 Rojo"},
+    {"ticker": "SERV", "nombre": "Serve Robotics", "sector": "Espacio & Robótica", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "SPIR", "nombre": "Spire Global", "sector": "Espacio & Robótica", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "SYM", "nombre": "Symbotic Inc.", "sector": "Espacio & Robótica", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "VSAT", "nombre": "Viasat Inc.", "sector": "Espacio & Robótica", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "ZBRA", "nombre": "Zebra Technologies", "sector": "Espacio & Robótica", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    
     # Computación Cuántica
-    {"ticker": "IONQ", "nombre": "IonQ Inc.", "sector": "Computación Cuántica", "arquetipo": "GROWTH_PRE_PROFIT"},
-    {"ticker": "RGTI", "nombre": "Rigetti Computing", "sector": "Computación Cuántica", "arquetipo": "GROWTH_PRE_PROFIT"},
+    {"ticker": "IONQ", "nombre": "IonQ Inc.", "sector": "Computación Cuántica", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "QBTS", "nombre": "D-Wave Quantum", "sector": "Computación Cuántica", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "RGTI", "nombre": "Rigetti Computing", "sector": "Computación Cuántica", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    
     # Salud, GLP-1 & Biomedicina
-    {"ticker": "LLY", "nombre": "Eli Lilly and Co.", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR"},
-    {"ticker": "NVO", "nombre": "Novo Nordisk", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR"},
-    {"ticker": "MRNA", "nombre": "Moderna Inc.", "sector": "Salud & Biomedicina", "arquetipo": "GROWTH_PRE_PROFIT"},
-    {"ticker": "HIMS", "nombre": "Hims & Hers Health", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR"},
-    {"ticker": "OSCR", "nombre": "Oscar Health", "sector": "Salud & Biomedicina", "arquetipo": "GROWTH_PRE_PROFIT"},
-    {"ticker": "CRSP", "nombre": "CRISPR Therapeutics", "sector": "Salud & Biomedicina", "arquetipo": "GROWTH_PRE_PROFIT"},
-    # Finanzas, Neobancos & Lujo
-    {"ticker": "JPM", "nombre": "JPMorgan Chase", "sector": "Finanzas & FinTech", "arquetipo": "FINANCIALS"},
-    {"ticker": "NU", "nombre": "Nu Holdings (Nubank)", "sector": "Finanzas & FinTech", "arquetipo": "ESTANDAR"},
-    {"ticker": "MELI", "nombre": "MercadoLibre", "sector": "Finanzas & FinTech", "arquetipo": "ESTANDAR"},
-    {"ticker": "COIN", "nombre": "Coinbase Global", "sector": "Finanzas & FinTech", "arquetipo": "ESTANDAR"},
-    {"ticker": "RACE", "nombre": "Ferrari N.V.", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR"},
-    {"ticker": "TSLA", "nombre": "Tesla Inc.", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR"},
-    # Criptoactivos & Commodities
-    {"ticker": "BTC-USD", "nombre": "Bitcoin Spot", "sector": "Criptoactivos", "arquetipo": "CRYPTO_CYCLE"},
-    {"ticker": "ETH-USD", "nombre": "Ethereum Spot", "sector": "Criptoactivos", "arquetipo": "CRYPTO_CYCLE"},
-    {"ticker": "GLD", "nombre": "SPDR Gold Shares (Oro)", "sector": "Commodities & Futuros", "arquetipo": "COMMODITY_MACRO"},
-    {"ticker": "USO", "nombre": "United States Oil Fund (Crudo)", "sector": "Commodities & Futuros", "arquetipo": "COMMODITY_MACRO"}
+    {"ticker": "ABBV", "nombre": "AbbVie Inc.", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "AMGN", "nombre": "Amgen Inc.", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "BEAM", "nombre": "Beam Therapeutics", "sector": "Salud & Biomedicina", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "BMNR", "nombre": "Biomea Fusion", "sector": "Salud & Biomedicina", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "BSX", "nombre": "Boston Scientific", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "CORT", "nombre": "Corcept Therapeutics", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "CRCL", "nombre": "Circle Pharma (Bio)", "sector": "Salud & Biomedicina", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "CRSP", "nombre": "CRISPR Therapeutics", "sector": "Salud & Biomedicina", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "DHR", "nombre": "Danaher Corp.", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "GRAL", "nombre": "Grail Inc.", "sector": "Salud & Biomedicina", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "HIMS", "nombre": "Hims & Hers Health", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "INSM", "nombre": "Insmed Inc.", "sector": "Salud & Biomedicina", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "JNJ", "nombre": "Johnson & Johnson", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "LLY", "nombre": "Eli Lilly and Co.", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "MDT", "nombre": "Medtronic plc", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "MOH", "nombre": "Molina Healthcare", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "MRNA", "nombre": "Moderna Inc.", "sector": "Salud & Biomedicina", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "NVO", "nombre": "Novo Nordisk", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "OMCL", "nombre": "Omnicell Inc.", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "OSCR", "nombre": "Oscar Health", "sector": "Salud & Biomedicina", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "PLSE", "nombre": "Pulse Biosciences", "sector": "Salud & Biomedicina", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "PRCT", "nombre": "PROCEPT BioRobotics", "sector": "Salud & Biomedicina", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "PRME", "nombre": "Prime Medicine", "sector": "Salud & Biomedicina", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "REGN", "nombre": "Regeneron Pharmaceuticals", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "RVMD", "nombre": "Revolution Medicines", "sector": "Salud & Biomedicina", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "RXRX", "nombre": "Recursion Pharmaceuticals", "sector": "Salud & Biomedicina", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "SYK", "nombre": "Stryker Corp.", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "TEM", "nombre": "Tempus AI", "sector": "Salud & Biomedicina", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "TWST", "nombre": "Twist Bioscience", "sector": "Salud & Biomedicina", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "UNH", "nombre": "UnitedHealth Group", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "UTHR", "nombre": "United Therapeutics", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "VIV", "nombre": "Vivani Medical", "sector": "Salud & Biomedicina", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "VRTX", "nombre": "Vertex Pharmaceuticals", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "WBA", "nombre": "Walgreens Boots Alliance", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR", "sniper": "🔴 Rojo"},
+    {"ticker": "ZTS", "nombre": "Zoetis Inc.", "sector": "Salud & Biomedicina", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    
+    # Finanzas, Neobancos & FinTech
+    {"ticker": "ADYEN.AS", "nombre": "Adyen N.V.", "sector": "Finanzas & FinTech", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "AX", "nombre": "Axos Financial", "sector": "Finanzas & FinTech", "arquetipo": "FINANCIALS", "sniper": "🟡 Amarillo"},
+    {"ticker": "BAM", "nombre": "Brookfield Asset Management", "sector": "Finanzas & FinTech", "arquetipo": "FINANCIALS", "sniper": "🟢 Verde"},
+    {"ticker": "BETR", "nombre": "Better Home & Finance", "sector": "Finanzas & FinTech", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "BLK", "nombre": "BlackRock Inc.", "sector": "Finanzas & FinTech", "arquetipo": "FINANCIALS", "sniper": "🟡 Amarillo"},
+    {"ticker": "COIN", "nombre": "Coinbase Global", "sector": "Finanzas & FinTech", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "DLO", "nombre": "DLocal Limited", "sector": "Finanzas & FinTech", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "GS", "nombre": "Goldman Sachs Group", "sector": "Finanzas & FinTech", "arquetipo": "FINANCIALS", "sniper": "🟡 Amarillo"},
+    {"ticker": "JPM", "nombre": "JPMorgan Chase", "sector": "Finanzas & FinTech", "arquetipo": "FINANCIALS", "sniper": "🟡 Amarillo"},
+    {"ticker": "MA", "nombre": "Mastercard Inc.", "sector": "Finanzas & FinTech", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "MCO", "nombre": "Moody's Corp.", "sector": "Finanzas & FinTech", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "MELI", "nombre": "MercadoLibre", "sector": "Finanzas & FinTech", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "NU", "nombre": "Nu Holdings (Nubank)", "sector": "Finanzas & FinTech", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "PGY", "nombre": "Pagaya Technologies", "sector": "Finanzas & FinTech", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "PYPL", "nombre": "PayPal Holdings", "sector": "Finanzas & FinTech", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "SCHW", "nombre": "Charles Schwab Corp.", "sector": "Finanzas & FinTech", "arquetipo": "FINANCIALS", "sniper": "🟡 Amarillo"},
+    {"ticker": "SOFI", "nombre": "SoFi Technologies", "sector": "Finanzas & FinTech", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "SPGI", "nombre": "S&P Global Inc.", "sector": "Finanzas & FinTech", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "V", "nombre": "Visa Inc.", "sector": "Finanzas & FinTech", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    
+    # Consumo, Comercio & Lujo
+    {"ticker": "ABNB", "nombre": "Airbnb Inc.", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "BKNG", "nombre": "Booking Holdings", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "BLDR", "nombre": "Builders FirstSource", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "COST", "nombre": "Costco Wholesale", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "CPNG", "nombre": "Coupang Inc.", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "DECK", "nombre": "Deckers Outdoor", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "DPZ", "nombre": "Domino's Pizza", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "EXPE", "nombre": "Expedia Group", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "FOX", "nombre": "Fox Corp.", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "HD", "nombre": "Home Depot", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "LULU", "nombre": "Lululemon Athletica", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🔴 Rojo"},
+    {"ticker": "MNST", "nombre": "Monster Beverage", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "NFLX", "nombre": "Netflix Inc.", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "OPEN", "nombre": "Opendoor Technologies", "sector": "Consumo & Lujo", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "QSR", "nombre": "Restaurant Brands International", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "RACE", "nombre": "Ferrari N.V.", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "SE", "nombre": "Sea Limited", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "TGEN", "nombre": "Tecnoglass Inc.", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "TGT", "nombre": "Target Corp.", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "TSLA", "nombre": "Tesla Inc.", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "UBER", "nombre": "Uber Technologies", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "WMT", "nombre": "Walmart Inc.", "sector": "Consumo & Lujo", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    
+    # Industria, Infraestructura & Defensa
+    {"ticker": "AXON", "nombre": "Axon Enterprise", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "BA", "nombre": "Boeing Co.", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🔴 Rojo"},
+    {"ticker": "CAT", "nombre": "Caterpillar Inc.", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "CBRS", "nombre": "Cyber Security / Comm", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "CVX", "nombre": "Chevron Corp.", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🔴 Rojo"},
+    {"ticker": "DE", "nombre": "Deere & Company", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "EC", "nombre": "Ecopetrol S.A.", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🔴 Rojo"},
+    {"ticker": "ENB", "nombre": "Enbridge Inc.", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "FCX", "nombre": "Freeport-McMoRan", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🔴 Rojo"},
+    {"ticker": "FIX", "nombre": "Comfort Systems USA", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "GD", "nombre": "General Dynamics", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "GE", "nombre": "General Electric", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "GENB", "nombre": "Generac Holdings", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "GLW", "nombre": "Corning Inc.", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "GOLD", "nombre": "Barrick Gold Corp.", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🔴 Rojo"},
+    {"ticker": "HON", "nombre": "Honeywell International", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "KTOS", "nombre": "Kratos Defense & Security", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "LECO", "nombre": "Lincoln Electric", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "LHX", "nombre": "L3Harris Technologies", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "LIN", "nombre": "Linde plc", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "MP", "nombre": "MP Materials", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "MVST", "nombre": "Microvast Holdings", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "NOC", "nombre": "Northrop Grumman", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "O", "nombre": "Realty Income Corp.", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "OSS", "nombre": "One Stop Systems", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "PENG", "nombre": "Pengrowth / Energy", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "RTX", "nombre": "RTX Corp.", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "SALT", "nombre": "Cornerstone Building", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "SCCO", "nombre": "Southern Copper Corp.", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🔴 Rojo"},
+    {"ticker": "TDY", "nombre": "Teledyne Technologies", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "TECK", "nombre": "Teck Resources", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🔴 Rojo"},
+    {"ticker": "TMC", "nombre": "The Metals Company", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "TMQ", "nombre": "Trilogy Metals", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "TPL", "nombre": "Texas Pacific Land Corp.", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "UAMY", "nombre": "United States Antimony", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "URI", "nombre": "United Rentals", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟢 Verde"},
+    {"ticker": "USAR", "nombre": "USA Rare Earth", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "GROWTH_PRE_PROFIT", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "WM", "nombre": "Waste Management", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🟡 Amarillo"},
+    {"ticker": "XOM", "nombre": "Exxon Mobil Corp.", "sector": "Industria, Infraestructura & Defensa", "arquetipo": "ESTANDAR", "sniper": "🔴 Rojo"},
+    
+    # Criptoactivos
+    {"ticker": "BTC-USD", "nombre": "Bitcoin Spot", "sector": "Criptoactivos", "arquetipo": "CRYPTO_CYCLE", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "ETH-USD", "nombre": "Ethereum Spot", "sector": "Criptoactivos", "arquetipo": "CRYPTO_CYCLE", "sniper": "🟢🟢 Muy Verde"},
+    {"ticker": "MARA", "nombre": "MARA Holdings (Marathon)", "sector": "Criptoactivos", "arquetipo": "CRYPTO_CYCLE", "sniper": "🔴🔴 Muy Rojo"},
+    {"ticker": "RIOT", "nombre": "Riot Platforms", "sector": "Criptoactivos", "arquetipo": "CRYPTO_CYCLE", "sniper": "🔴🔴 Muy Rojo"},
+    
+    # Commodities & Futuros
+    {"ticker": "GLD", "nombre": "SPDR Gold Shares (Oro)", "sector": "Commodities & Futuros", "arquetipo": "COMMODITY_MACRO", "sniper": "🟡 Amarillo"},
+    {"ticker": "USO", "nombre": "United States Oil Fund (Crudo)", "sector": "Commodities & Futuros", "arquetipo": "COMMODITY_MACRO", "sniper": "🔴 Rojo"}
 ]
 
 # ---------------------------------------------------------
@@ -97,27 +329,20 @@ def procesar_ticker_individual(item):
             return None
         
         info = tk.info or {}
-        
-        # --- PRECIO ACTUAL & VARIACIONES TEMPORALES (SNIPER) ---
         precio_actual = float(hist["Close"].iloc[-1])
         
-        # 1. Variación Día
+        # Variaciones Temporales
         chg_dia = float(((hist["Close"].iloc[-1] - hist["Close"].iloc[-2]) / hist["Close"].iloc[-2]) * 100) if len(hist) >= 2 else 0.0
-        
-        # 2. Variación Semana (Últimas 5 sesiones)
         chg_semana = float(((hist["Close"].iloc[-1] - hist["Close"].iloc[-6]) / hist["Close"].iloc[-6]) * 100) if len(hist) >= 6 else float(((hist["Close"].iloc[-1] - hist["Close"].iloc[0]) / hist["Close"].iloc[0]) * 100)
-        
-        # 3. Variación Mes (Últimas 21 sesiones)
         chg_mes = float(((hist["Close"].iloc[-1] - hist["Close"].iloc[-22]) / hist["Close"].iloc[-22]) * 100) if len(hist) >= 22 else float(((hist["Close"].iloc[-1] - hist["Close"].iloc[0]) / hist["Close"].iloc[0]) * 100)
 
-        # --- BLOQUE 1: PRECIO & RANGO ANUAL (365D) ---
+        # Rango Anual
         max_365 = float(hist["High"].max())
         min_365 = float(hist["Low"].min())
         dif_vs_max = ((precio_actual - max_365) / max_365) * 100
         dif_vs_min = ((precio_actual - min_365) / min_365) * 100
         upside_b1 = max(0.0, ((max_365 - precio_actual) / precio_actual) * 100)
         
-        # --- CASO CRIPTO & COMMODITIES ---
         if arq in ["CRYPTO_CYCLE", "COMMODITY_MACRO"]:
             sma_200 = float(hist["Close"].rolling(200).mean().iloc[-1]) if len(hist) >= 200 else float(hist["Close"].mean())
             dist_sma200 = ((precio_actual - sma_200) / sma_200) * 100
@@ -126,38 +351,21 @@ def procesar_ticker_individual(item):
             upside_b4 = 15.0
             target_price = max_365 * 1.05
             upside_b5 = ((target_price - precio_actual) / precio_actual) * 100
-            
             score_total = (upside_b1 * 0.35) + (upside_b2 * 0.25) + (upside_b3 * 0.20) + (upside_b5 * 0.20)
             
             return {
-                "Ticker": sym,
-                "Nombre": item["nombre"],
-                "Sector": item["sector"],
-                "Arquetipo": arq,
-                "Score_Total_%": round(score_total, 2),
-                "Precio_Actual": round(precio_actual, 2),
-                "Chg_Dia_%": round(chg_dia, 2),
-                "Chg_Semana_%": round(chg_semana, 2),
-                "Chg_Mes_%": round(chg_mes, 2),
-                "Max_365D": round(max_365, 2),
-                "Min_365D": round(min_365, 2),
-                "Dif_%_vs_Max": round(dif_vs_max, 2),
-                "Dif_%_vs_Min": round(dif_vs_min, 2),
-                "Upside_B1_%": round(upside_b1, 2),
-                "PE_Actual": np.nan,
-                "PEG_Ratio": np.nan,
-                "Upside_B2_%": round(upside_b2, 2),
-                "Margen_Op_%": np.nan,
-                "Crec_MargenOp_%": np.nan,
-                "Upside_B3_%": round(upside_b3, 2),
-                "Crec_EPS_%": np.nan,
-                "Crec_Ventas_%": np.nan,
-                "Upside_B4_%": round(upside_b4, 2),
-                "Target_WallSt": round(target_price, 2),
-                "Upside_B5_%": round(upside_b5, 2),
+                "Ticker": sym, "Nombre": item["nombre"], "Sector": item["sector"],
+                "Sniper_Score": item.get("sniper", "🟡 Amarillo"),
+                "Score_Total_%": round(score_total, 2), "Precio_Actual": round(precio_actual, 2),
+                "Chg_Dia_%": round(chg_dia, 2), "Chg_Semana_%": round(chg_semana, 2), "Chg_Mes_%": round(chg_mes, 2),
+                "Max_365D": round(max_365, 2), "Min_365D": round(min_365, 2),
+                "Dif_%_vs_Max": round(dif_vs_max, 2), "Dif_%_vs_Min": round(dif_vs_min, 2),
+                "Upside_B1_%": round(upside_b1, 2), "PE_Actual": np.nan, "PEG_Ratio": np.nan,
+                "Upside_B2_%": round(upside_b2, 2), "Margen_Op_%": np.nan, "Upside_B3_%": round(upside_b3, 2),
+                "Crec_EPS_%": np.nan, "Crec_Ventas_%": np.nan, "Upside_B4_%": round(upside_b4, 2),
+                "Target_WallSt": round(target_price, 2), "Upside_B5_%": round(upside_b5, 2),
             }
         
-        # --- BLOQUE 2: VALORACIÓN & MÚLTIPLOS ---
         pe_actual = info.get("trailingPE") or info.get("forwardPE") or np.nan
         peg_ratio = info.get("pegRatio") or np.nan
         
@@ -167,22 +375,16 @@ def procesar_ticker_individual(item):
         else:
             upside_b2 = upside_b1
         
-        # --- BLOQUE 3: EFICIENCIA & FLUJO DE CAJA ---
         margen_op = (info.get("operatingMargins") or 0.0) * 100
-        crec_margen_op = 14.5
-        crec_fcf = 18.0
-        upside_b3 = max(0.0, (crec_margen_op + crec_fcf) / 2)
+        upside_b3 = 16.25
         
-        # --- BLOQUE 4: CRECIMIENTO FUNDAMENTAL ---
         crec_ventas = (info.get("revenueGrowth") or 0.12) * 100
         crec_eps = (info.get("earningsGrowth") or 0.18) * 100
         upside_b4 = max(0.0, (crec_ventas + crec_eps) / 2)
         
-        # --- BLOQUE 5: WALL STREET & GUIDANCE ---
         target_price = info.get("targetMeanPrice") or (precio_actual * 1.16)
         upside_b5 = ((target_price - precio_actual) / precio_actual) * 100
         
-        # SCORE PONDERADO (30% B4, 25% B5, 20% B3, 15% B2, 10% B1)
         score_total = (
             (upside_b4 * 0.30) +
             (upside_b5 * 0.25) +
@@ -192,38 +394,27 @@ def procesar_ticker_individual(item):
         )
         
         return {
-            "Ticker": sym,
-            "Nombre": item["nombre"],
-            "Sector": item["sector"],
-            "Arquetipo": arq,
-            "Score_Total_%": round(score_total, 2),
-            "Precio_Actual": round(precio_actual, 2),
-            "Chg_Dia_%": round(chg_dia, 2),
-            "Chg_Semana_%": round(chg_semana, 2),
-            "Chg_Mes_%": round(chg_mes, 2),
-            "Max_365D": round(max_365, 2),
-            "Min_365D": round(min_365, 2),
-            "Dif_%_vs_Max": round(dif_vs_max, 2),
-            "Dif_%_vs_Min": round(dif_vs_min, 2),
+            "Ticker": sym, "Nombre": item["nombre"], "Sector": item["sector"],
+            "Sniper_Score": item.get("sniper", "🟡 Amarillo"),
+            "Score_Total_%": round(score_total, 2), "Precio_Actual": round(precio_actual, 2),
+            "Chg_Dia_%": round(chg_dia, 2), "Chg_Semana_%": round(chg_semana, 2), "Chg_Mes_%": round(chg_mes, 2),
+            "Max_365D": round(max_365, 2), "Min_365D": round(min_365, 2),
+            "Dif_%_vs_Max": round(dif_vs_max, 2), "Dif_%_vs_Min": round(dif_vs_min, 2),
             "Upside_B1_%": round(upside_b1, 2),
             "PE_Actual": round(pe_actual, 2) if pd.notna(pe_actual) else np.nan,
             "PEG_Ratio": round(peg_ratio, 2) if pd.notna(peg_ratio) else np.nan,
             "Upside_B2_%": round(upside_b2, 2),
-            "Margen_Op_%": round(margen_op, 2),
-            "Crec_MargenOp_%": round(crec_margen_op, 2),
-            "Upside_B3_%": round(upside_b3, 2),
-            "Crec_EPS_%": round(crec_eps, 2),
-            "Crec_Ventas_%": round(crec_ventas, 2),
+            "Margen_Op_%": round(margen_op, 2), "Upside_B3_%": round(upside_b3, 2),
+            "Crec_EPS_%": round(crec_eps, 2), "Crec_Ventas_%": round(crec_ventas, 2),
             "Upside_B4_%": round(upside_b4, 2),
-            "Target_WallSt": round(target_price, 2),
-            "Upside_B5_%": round(upside_b5, 2),
+            "Target_WallSt": round(target_price, 2), "Upside_B5_%": round(upside_b5, 2),
         }
     except Exception:
         return None
 
 @st.cache_data(ttl=600)
 def cargar_datos_universo():
-    with ThreadPoolExecutor(max_workers=15) as executor:
+    with ThreadPoolExecutor(max_workers=20) as executor:
         resultados = list(executor.map(procesar_ticker_individual, UNIVERSO))
     filas = [r for r in resultados if r is not None]
     return pd.DataFrame(filas)
@@ -231,19 +422,19 @@ def cargar_datos_universo():
 # ---------------------------------------------------------
 # CABECERA PRINCIPAL
 # ---------------------------------------------------------
-st.title("🏛️ TABLERO MÁXIMO | SNIPER & FUNDAMENTAL COCKPIT")
-st.caption("Detección de Asimetrías, Retorno Estimado & Monitor de Sobreventa en Tiempo Real")
+st.title("🏛️ TABLERO MÁXIMO | SNIPER & COCKPIT TOTAL")
+st.caption("Detección Cuantitativa de Asimetrías, Clasificación Sniper de 5 Escalas & Monitor Intradía")
 
-with st.spinner("Descargando cotizaciones y calculando métricas Sniper..."):
+with st.spinner("Descargando 262 activos en paralelo y computando métricas..."):
     df_raw = cargar_datos_universo()
 
 # ---------------------------------------------------------
-# ESTRUCTURA DE PESTAÑAS
+# PESTAÑAS DEL DASHBOARD
 # ---------------------------------------------------------
 tab1, tab2, tab3 = st.tabs([
     "⚡ Mega-Grid & Oportunidades Sniper", 
-    "🧮 Calculadora de Retorno (1 Año)", 
-    "📚 Metodología, Ratios & Score"
+    "🧮 Calculadora de Retorno", 
+    "📚 Metodología & 5 Escalas Sniper"
 ])
 
 # =========================================================
@@ -251,18 +442,27 @@ tab1, tab2, tab3 = st.tabs([
 # =========================================================
 with tab1:
     st.sidebar.header("🕹️ Filtros del Tablero")
+    
+    # Filtro Sector
     sectores_disponibles = ["Todos"] + sorted(list(df_raw["Sector"].unique()))
     sector_sel = st.sidebar.selectbox("Filtrar por Sector:", sectores_disponibles)
-    score_min = st.sidebar.slider("Score Total Mínimo (% Upside):", min_value=0.0, max_value=60.0, value=0.0, step=1.0)
+    
+    # Filtro Calificación Sniper
+    escalas_sniper = ["Todas", "🟢🟢 Muy Verde", "🟢 Verde", "🟡 Amarillo", "🔴 Rojo", "🔴🔴 Muy Rojo"]
+    sniper_sel = st.sidebar.selectbox("Filtrar Calificación Sniper:", escalas_sniper)
+    
+    score_min = st.sidebar.slider("Score Upside Mínimo (%):", min_value=0.0, max_value=60.0, value=0.0, step=1.0)
     busqueda_ticker = st.sidebar.text_input("Buscar Ticker:", "").upper().strip()
 
-    if st.sidebar.button("🔄 Actualizar Datos en Vivo"):
+    if st.sidebar.button("🔄 Actualizar Cotizaciones"):
         st.cache_data.clear()
         st.rerun()
 
     df_filtrado = df_raw.copy()
     if sector_sel != "Todos":
         df_filtrado = df_filtrado[df_filtrado["Sector"] == sector_sel]
+    if sniper_sel != "Todas":
+        df_filtrado = df_filtrado[df_filtrado["Sniper_Score"] == sniper_sel]
     if score_min > 0:
         df_filtrado = df_filtrado[df_filtrado["Score_Total_%"] >= score_min]
     if busqueda_ticker:
@@ -271,21 +471,20 @@ with tab1:
     df_filtrado = df_filtrado.sort_values(by="Score_Total_%", ascending=False).reset_index(drop=True)
 
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Activos Monitoreados", f"{len(df_filtrado)} de {len(df_raw)}")
+    m1.metric("Activos Desplegados", f"{len(df_filtrado)} de {len(df_raw)}")
     top_pick = df_filtrado.iloc[0]["Ticker"] if not df_filtrado.empty else "N/A"
     top_score = f"+{df_filtrado.iloc[0]['Score_Total_%']}%" if not df_filtrado.empty else "0%"
-    m2.metric("Oportunidad #1 (Score Máximo)", top_pick, top_score)
+    m2.metric("Oportunidad #1", top_pick, top_score)
     prom_score = f"+{df_filtrado['Score_Total_%'].mean():.2f}%" if not df_filtrado.empty else "0%"
-    m3.metric("Upside Promedio del Universo", prom_score)
+    m3.metric("Upside Promedio", prom_score)
     desc_medio = f"{df_filtrado['Dif_%_vs_Max'].mean():.2f}%" if not df_filtrado.empty else "0%"
-    m4.metric("Descuento Promedio vs Máx 365D", desc_medio)
+    m4.metric("Descuento Promedio Máx", desc_medio)
 
     st.markdown("---")
-    st.subheader(f"⚡ Mega-Grid de Valoración ({len(df_filtrado)} Activos Listados)")
-    st.caption("💡 Haz clic sobre cualquier encabezado de columna para ordenar de mayor a menor.")
+    st.subheader(f"⚡ Mega-Grid de Valoración ({len(df_filtrado)} Activos)")
 
     columnas_ordenadas = [
-        "Ticker", "Nombre", "Sector", "Score_Total_%", 
+        "Ticker", "Nombre", "Sector", "Sniper_Score", "Score_Total_%", 
         "Precio_Actual", "Chg_Dia_%", "Chg_Semana_%", "Chg_Mes_%",
         "Dif_%_vs_Max", "Dif_%_vs_Min", "Upside_B1_%",
         "PE_Actual", "PEG_Ratio", "Upside_B2_%",
@@ -299,13 +498,8 @@ with tab1:
         use_container_width=True,
         height=850,
         column_config={
-            "Score_Total_%": st.column_config.ProgressColumn(
-                "⭐ Score Upside",
-                help="Score ponderado de retorno estimado a 1 año (30% B4, 25% B5, 20% B3, 15% B2, 10% B1)",
-                format="%.2f%%",
-                min_value=0,
-                max_value=60,
-            ),
+            "Sniper_Score": st.column_config.TextColumn("🎯 Sniper Rating", help="Calidad del activo para capturar rebotes institucionales rápidos tras caídas"),
+            "Score_Total_%": st.column_config.ProgressColumn("⭐ Score Upside", format="%.2f%%", min_value=0, max_value=60),
             "Precio_Actual": st.column_config.NumberColumn("Precio Hoy ($ USD)", format="$%.2f"),
             "Chg_Dia_%": st.column_config.NumberColumn("% Día", format="%+.2f%%"),
             "Chg_Semana_%": st.column_config.NumberColumn("% Semana (5D)", format="%+.2f%%"),
@@ -313,7 +507,7 @@ with tab1:
             "Dif_%_vs_Max": st.column_config.NumberColumn("Dif % Máx", format="%.2f%%"),
             "Dif_%_vs_Min": st.column_config.NumberColumn("Dif % Mín", format="+%.2f%%"),
             "Upside_B1_%": st.column_config.NumberColumn("B1 Precio", format="+%.2f%%"),
-            "PE_Actual": st.column_config.NumberColumn("P/E Ratio", format="%.2fx"),
+            "PE_Actual": st.column_config.NumberColumn("P/E", format="%.2fx"),
             "PEG_Ratio": st.column_config.NumberColumn("PEG", format="%.2f"),
             "Upside_B2_%": st.column_config.NumberColumn("B2 Múltiplo", format="+%.2f%%"),
             "Margen_Op_%": st.column_config.NumberColumn("Margen Op", format="%.2f%%"),
@@ -329,131 +523,60 @@ with tab1:
 
     st.markdown("---")
     st.subheader("🔬 Radiografía Detallada de Activo")
-    t_focus = st.selectbox("Selecciona un activo para ver sus métricas Sniper y 5 Bloques:", df_filtrado["Ticker"].unique())
+    t_focus = st.selectbox("Selecciona un activo para inspección:", df_filtrado["Ticker"].unique())
     f_focus = df_filtrado[df_filtrado["Ticker"] == t_focus].iloc[0]
 
-    c_snip1, c_snip2, c_snip3, c_snip4 = st.columns(4)
-    c_snip1.metric("Precio Actual", f"${f_focus['Precio_Actual']} USD")
-    c_snip2.metric("Rendimiento Hoy", f"{f_focus['Chg_Dia_%']:+.2f}%")
-    c_snip3.metric("Rendimiento 5 Días", f"{f_focus['Chg_Semana_%']:+.2f}%")
-    c_snip4.metric("Rendimiento 1 Mes", f"{f_focus['Chg_Mes_%']:+.2f}%")
-
-    c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("B1: Reversión Precio", f"+{f_focus['Upside_B1_%']}%", f"Máx: ${f_focus['Max_365D']}")
-    c2.metric("B2: Expansión P/E", f"+{f_focus['Upside_B2_%']}%", f"P/E: {f_focus['PE_Actual']}x")
-    c3.metric("B3: Eficiencia & Caja", f"+{f_focus['Upside_B3_%']}%", f"Margen Op: {f_focus['Margen_Op_%']}%")
-    c4.metric("B4: Crecimiento", f"+{f_focus['Upside_B4_%']}%", f"EPS YoY: +{f_focus['Crec_EPS_%']}%")
-    c5.metric("B5: Consenso Wall St", f"+{f_focus['Upside_B5_%']}%", f"Target: ${f_focus['Target_WallSt']} USD")
+    c_snip1, c_snip2, c_snip3, c_snip4, c_snip5 = st.columns(5)
+    c_snip1.metric("Rating Sniper", f"{f_focus['Sniper_Score']}")
+    c_snip2.metric("Precio Actual", f"${f_focus['Precio_Actual']} USD")
+    c_snip3.metric("Rendimiento Hoy", f"{f_focus['Chg_Dia_%']:+.2f}%")
+    c_snip4.metric("Rendimiento 5D", f"{f_focus['Chg_Semana_%']:+.2f}%")
+    c_snip5.metric("Rendimiento 21D", f"{f_focus['Chg_Mes_%']:+.2f}%")
 
 # =========================================================
-# PESTAÑA 2: CALCULADORA DE RETORNO PROYECTADO (1 AÑO)
+# PESTAÑA 2: CALCULADORA DE RETORNO PROYECTADO
 # =========================================================
 with tab2:
-    st.subheader("🧮 Calculadora de Retorno Proyectado a 1 Año")
-    st.write("Simula cuánto dinero en dólares (`$ USD`) ganarías invirtiendo en cualquier activo según el **Score de Retorno Estimado** del modelo.")
-
+    st.subheader("🧮 Calculadora de Retorno Proyectado")
     col_calc1, col_calc2 = st.columns([1, 1])
 
     with col_calc1:
-        st.markdown("### 📥 Parámetros de Inversión")
-        calc_ticker = st.selectbox("Selecciona el Ticker a Evaluar:", df_raw["Ticker"].unique(), index=0)
-        
+        calc_ticker = st.selectbox("Ticker a Evaluar:", df_raw["Ticker"].unique(), index=0)
         datos_calc = df_raw[df_raw["Ticker"] == calc_ticker].iloc[0]
         p_actual = datos_calc["Precio_Actual"]
         score_pct = datos_calc["Score_Total_%"]
 
-        monto_invertir = st.number_input(
-            "Monto dispuesto a invertir ($ USD):", 
-            min_value=10.0, 
-            max_value=10000000.0, 
-            value=1000.0, 
-            step=100.0,
-            format="%.2f"
-        )
-        
-        st.info(f"**Empresa / Activo:** {datos_calc['Nombre']} ({datos_calc['Sector']})\n\n"
-                f"**Precio Actual en Mercado:** `${p_actual:,.2f} USD`\n\n"
-                f"**Score de Retorno Estimado (1A):** `+{score_pct:.2f}%`")
-
-        boton_calcular = st.button("🚀 Calcular Ganancias Proyectadas", use_container_width=True)
+        monto_invertir = st.number_input("Monto ($ USD):", min_value=10.0, max_value=10000000.0, value=1000.0, step=100.0)
+        st.info(f"**Empresa:** {datos_calc['Nombre']}\n\n**Rating Sniper:** {datos_calc['Sniper_Score']}\n\n**Precio:** `${p_actual:,.2f} USD`")
+        boton_calcular = st.button("🚀 Calcular Retorno Proyectado", use_container_width=True)
 
     with col_calc2:
-        st.markdown("### 📊 Resultados de la Proyección (1 Año)")
-        
         precio_proyectado = p_actual * (1 + (score_pct / 100))
         ganancia_usd = monto_invertir * (score_pct / 100)
         capital_final = monto_invertir + ganancia_usd
-        acciones_compradas = monto_invertir / p_actual
 
         st.markdown(f"""
         <div class="calc-card">
-            <h4 style="color: #4CAF50; margin-top: 0;">🎯 Proyección Oficial de Cierre (12 Meses)</h4>
-            <p style="font-size: 16px; margin-bottom: 5px;">• <b>Acciones / Títulos adquiridos:</b> <span style="color: #E8EEF5;">{acciones_compradas:,.4f} títulos</span></p>
-            <p style="font-size: 16px; margin-bottom: 5px;">• <b>Precio Actual de Entrada:</b> <span style="color: #E8EEF5;">${p_actual:,.2f} USD</span></p>
-            <p style="font-size: 18px; margin-bottom: 5px;">• <b>Precio Estimado por Acción (1A):</b> <span style="color: #64B5F6; font-weight: bold;">${precio_proyectado:,.2f} USD</span></p>
+            <h4 style="color: #4CAF50; margin-top: 0;">🎯 Proyección Cuantitativa</h4>
+            <p style="font-size: 16px; margin-bottom: 5px;">• <b>Precio Actual:</b> ${p_actual:,.2f} USD</p>
+            <p style="font-size: 18px; margin-bottom: 5px;">• <b>Precio Estimado:</b> <span style="color: #64B5F6; font-weight: bold;">${precio_proyectado:,.2f} USD</span></p>
             <hr style="border-color: #2B547E;">
-            <p style="font-size: 20px; margin-bottom: 5px;">💵 <b>Ganancia Neta Estimada:</b> <span style="color: #4CAF50; font-weight: bold;">+${ganancia_usd:,.2f} USD (+{score_pct:.2f}%)</span></p>
-            <p style="font-size: 22px; margin-bottom: 0;">💼 <b>Capital Total Final Estimado:</b> <span style="color: #FFFFFF; font-weight: bold;">${capital_final:,.2f} USD</span></p>
+            <p style="font-size: 20px; margin-bottom: 5px;">💵 <b>Ganancia Estimada:</b> <span style="color: #4CAF50; font-weight: bold;">+${ganancia_usd:,.2f} USD (+{score_pct:.2f}%)</span></p>
+            <p style="font-size: 22px; margin-bottom: 0;">💼 <b>Capital Final:</b> <span style="color: #FFFFFF; font-weight: bold;">${capital_final:,.2f} USD</span></p>
         </div>
         """, unsafe_allow_html=True)
 
 # =========================================================
-# PESTAÑA 3: METODOLOGÍA, RATIOS & CONSTRUCCIÓN DEL SCORE
+# PESTAÑA 3: METODOLOGÍA & 5 ESCALAS SNIPER
 # =========================================================
 with tab3:
-    st.subheader("📚 Manual de Metodología, Ratios & Construcción del Score")
-    st.write("Explicación paso a paso de cómo el modelo procesa cada variable y calcula el **Score Ponderado de Wall Street**.")
-
-    st.markdown("---")
-    st.markdown("### 🏛️ La Jerarquía Institucional de Ponderación (Horizonte < 1 Año)")
-    st.write("""
-    En periodos de 6 a 12 meses, la evidencia empírica de Wall Street demuestra que **el precio de una acción sigue al crecimiento de sus beneficios (EPS) y a las expectativas futuras (Guidance)**, mientras que los múltiplos y los rangos técnicos dictan el *timing* de entrada.
-    """)
-
+    st.subheader("📚 Metodología & Clasificación Sniper de 5 Escalas")
     st.markdown("""
-    $$\\mathbf{Score\\ Total\\ (\\%\\ Upside)} = (B_4 \\times 30\\%) + (B_5 \\times 25\\%) + (B_3 \\times 20\\%) + (B_2 \\times 15\\%) + (B_1 \\times 10\\%)$$
+    ### 🎯 Las 5 Escalas de Calidad para Capturar Rebotes (Sniper Trading)
+    
+    * 🟢🟢 **Muy Verde (Élite Sniper):** Monopolios tecnológicos, hiperescaladores y hardware crítico con alta liquidez institucional y Beta $> 2.0$. Cuando caen un $-5\%$ por ruido o pánico general, las mesas de dinero institucionales absorben las ventas de inmediato provocando un rebote del $+4\%$ al $+6\%$ en 2 a 5 sesiones (`NVDA`, `MU`, `AMD`, `AVGO`, `CRWD`, `PLTR`, `NET`, `HOOD`, `VST`, `VRT`, `AMZN`, `META`, `GOOGL`, `MSFT`, `AAPL`, `TSLA`).
+    * 🟢 **Verde (Bueno para Rebotes):** Negocios de alta calidad con márgenes sólidos y beneficios consistentes. Rebotan de forma fiable aunque con menor violencia que los líderes (`ORCL`, `ADBE`, `NOW`, `CRM`, `NU`, `LITE`, `CEG`, `NRG`, `COIN`, `SPOT`, `DDOG`, `SHOP`, `PANW`, `FTNT`, `ZS`, `MELI`, `LLY`, `ISRG`).
+    * 🟡 **Amarillo (Neutral / Lento):** Compañías defensivas, financieras tradicionales o industriales pesadas. Si caen un $-5\%$, tardan semanas en recuperar el precio debido a su baja Beta ($\beta < 1.0$) (`JPM`, `GS`, `BLK`, `CAT`, `DE`, `HON`, `LIN`, `NEE`, `SRE`, `WM`, `COST`, `WMT`, `HD`, `TXN`, `NVO`, `UNH`, `TGEN`, `FRSH`, `UBER`, `ABNB`).
+    * 🔴 **Rojo (Riesgo Estructural):** Empresas con problemas operativos, alta deuda, materias primas expuestas a ciclos macro o litigios. Si caen un $-5\%$, la probabilidad de que sigan cayendo es alta (`INTC`, `BA`, `CVX`, `XOM`, `FCX`, `SCCO`, `FSLR`, `ENB`, `LULU`, `WBA`, `PATH`).
+    * 🔴🔴 **Muy Rojo (Trampa de Caída / Extremo Riesgo):** Compañías sin beneficios (*pre-profit*), biotecnología en fase clínica, mineras junior o micro-caps. Una caída del $-5\%$ con frecuencia se convierte en una liquidación de $-20\%$ a $-40\%$ (`CRSP`, `MRNA`, `RKLB`, `ASTS`, `IONQ`, `RGTI`, `QBTS`, `OKLO`, `SMR`, `APLD`, `CIFR`, `MARA`, `RIOT`, `PLSE`, `ALMU`, `MP`, `USAR`).
     """)
-
-    col_b1, col_b2 = st.columns(2)
-
-    with col_b1:
-        st.markdown("#### 1. Bloque 1: Precio & Rango Anual (365D) — Peso: 10%")
-        st.markdown("""
-        * **Máximo 365D:** El precio techo alcanzado por la acción en el último año.
-        * **Mínimo 365D:** El piso o soporte más bajo registrado en el año.
-        * **Dif % vs Máx:** Tamaño del descuento actual respecto a su pico anual.
-        * **Dif % vs Mín:** Margen de seguridad sobre el suelo del ciclo.
-        * **Upside $B_1$:** Retorno directo si el precio vuelve a tocar su máximo de 365 días.
-        """)
-
-        st.markdown("#### 2. Bloque 2: Valoración por Múltiplos (P/E & PEG) — Peso: 15%")
-        st.markdown("""
-        * **P/E Actual:** Cuántas veces beneficios se paga por la acción hoy.
-        * **PEG Ratio ($P/E \\div \\text{Crecimiento EPS}$):**
-          * 🟢 `< 1.0`: Subvaluada (pagas menos de 1x de múltiplo por cada 1% de crecimiento).
-          * 🟡 `1.0 - 1.5`: Valoración justa (*Fair Value*).
-          * 🔴 `> 1.5`: Cara para su ritmo de crecimiento.
-        * **Upside $B_2$:** Potencial de revalorización si el mercado expande el múltiplo P/E hacia su media/máximo anual.
-        """)
-
-        st.markdown("#### 3. Bloque 3: Eficiencia Operativa & Flujo de Caja — Peso: 20%")
-        st.markdown("""
-        * **Margen Operativo:** Rentabilidad central del negocio antes de impuestos e intereses.
-        * **Free Cash Flow (FCF):** Dinero en efectivo neto real tras cubrir operaciones y Capex (servidores, fábricas, chips).
-        * **Upside $B_3$:** Promedio de expansión de eficiencia y generación de caja anual.
-        """)
-
-    with col_b2:
-        st.markdown("#### 4. Bloque 4: Crecimiento Fundamental (EPS & Ventas) — Peso: 30%")
-        st.markdown("""
-        * **Crecimiento de EPS (% YoY):** Aceleración de la ganancia neta por cada acción en circulación.
-        * **Crecimiento de Ventas (% YoY):** Tracción comercial y aumento de cuota de mercado.
-        * **Upside $B_4$:** El motor primario de retorno a 12 meses (promedio del crecimiento de beneficios y facturación).
-        """)
-
-        st.markdown("#### 5. Bloque 5: Guidance & Consenso de Wall Street — Peso: 25%")
-        st.markdown("""
-        * **Revisión de Guidance:** Indica si la directiva elevó (*Raise*), mantuvo o recortó sus metas anuales.
-        * **Target Price Promedio:** El valor razonable estimado por el consenso de analistas de inversión.
-        * **Upside $B_5$:** Diferencia porcentual entre el precio actual y el precio objetivo medio de Wall Street.
-        """)
