@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 # CONFIGURACIÓN DE PÁGINA ANCHA (TERMINAL STYLE)
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="Tablero Máximo | Terminal Cuantitativo",
+    page_title="Tablero Máximo | Sniper & Intelligence Terminal",
     page_icon="🏛️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -18,7 +18,7 @@ st.markdown("""
 <style>
     .main { background-color: #0E1117; }
     .stDataFrame { border-radius: 8px; }
-    div[data-testid="stMetricValue"] { font-size: 24px; font-weight: bold; }
+    div[data-testid="stMetricValue"] { font-size: 22px; font-weight: bold; }
     .calc-card { background-color: #1A1C24; padding: 20px; border-radius: 10px; border: 1px solid #2B547E; }
 </style>
 """, unsafe_allow_html=True)
@@ -98,8 +98,19 @@ def procesar_ticker_individual(item):
         
         info = tk.info or {}
         
-        # --- BLOQUE 1: PRECIO & RANGO ANUAL (365D) ---
+        # --- PRECIO ACTUAL & VARIACIONES TEMPORALES (SNIPER) ---
         precio_actual = float(hist["Close"].iloc[-1])
+        
+        # 1. Variación Día
+        chg_dia = float(((hist["Close"].iloc[-1] - hist["Close"].iloc[-2]) / hist["Close"].iloc[-2]) * 100) if len(hist) >= 2 else 0.0
+        
+        # 2. Variación Semana (Últimas 5 sesiones)
+        chg_semana = float(((hist["Close"].iloc[-1] - hist["Close"].iloc[-6]) / hist["Close"].iloc[-6]) * 100) if len(hist) >= 6 else float(((hist["Close"].iloc[-1] - hist["Close"].iloc[0]) / hist["Close"].iloc[0]) * 100)
+        
+        # 3. Variación Mes (Últimas 21 sesiones)
+        chg_mes = float(((hist["Close"].iloc[-1] - hist["Close"].iloc[-22]) / hist["Close"].iloc[-22]) * 100) if len(hist) >= 22 else float(((hist["Close"].iloc[-1] - hist["Close"].iloc[0]) / hist["Close"].iloc[0]) * 100)
+
+        # --- BLOQUE 1: PRECIO & RANGO ANUAL (365D) ---
         max_365 = float(hist["High"].max())
         min_365 = float(hist["Low"].min())
         dif_vs_max = ((precio_actual - max_365) / max_365) * 100
@@ -125,6 +136,9 @@ def procesar_ticker_individual(item):
                 "Arquetipo": arq,
                 "Score_Total_%": round(score_total, 2),
                 "Precio_Actual": round(precio_actual, 2),
+                "Chg_Dia_%": round(chg_dia, 2),
+                "Chg_Semana_%": round(chg_semana, 2),
+                "Chg_Mes_%": round(chg_mes, 2),
                 "Max_365D": round(max_365, 2),
                 "Min_365D": round(min_365, 2),
                 "Dif_%_vs_Max": round(dif_vs_max, 2),
@@ -184,6 +198,9 @@ def procesar_ticker_individual(item):
             "Arquetipo": arq,
             "Score_Total_%": round(score_total, 2),
             "Precio_Actual": round(precio_actual, 2),
+            "Chg_Dia_%": round(chg_dia, 2),
+            "Chg_Semana_%": round(chg_semana, 2),
+            "Chg_Mes_%": round(chg_mes, 2),
             "Max_365D": round(max_365, 2),
             "Min_365D": round(min_365, 2),
             "Dif_%_vs_Max": round(dif_vs_max, 2),
@@ -204,7 +221,7 @@ def procesar_ticker_individual(item):
     except Exception:
         return None
 
-@st.cache_data(ttl=900)
+@st.cache_data(ttl=600)
 def cargar_datos_universo():
     with ThreadPoolExecutor(max_workers=15) as executor:
         resultados = list(executor.map(procesar_ticker_individual, UNIVERSO))
@@ -214,17 +231,17 @@ def cargar_datos_universo():
 # ---------------------------------------------------------
 # CABECERA PRINCIPAL
 # ---------------------------------------------------------
-st.title("🏛️ TABLERO MÁXIMO")
-st.caption("Cockpit Cuantitativo de Inteligencia Fundamental & Detección de Oportunidades (Horizonte < 1 Año)")
+st.title("🏛️ TABLERO MÁXIMO | SNIPER & FUNDAMENTAL COCKPIT")
+st.caption("Detección de Asimetrías, Retorno Estimado & Monitor de Sobreventa en Tiempo Real")
 
-with st.spinner("Descargando métricas y calculando scores en tiempo real..."):
+with st.spinner("Descargando cotizaciones y calculando métricas Sniper..."):
     df_raw = cargar_datos_universo()
 
 # ---------------------------------------------------------
-# ESTRUCTURA DE 3 PESTAÑAS
+# ESTRUCTURA DE PESTAÑAS
 # ---------------------------------------------------------
 tab1, tab2, tab3 = st.tabs([
-    "⚡ Mega-Grid & Oportunidades", 
+    "⚡ Mega-Grid & Oportunidades Sniper", 
     "🧮 Calculadora de Retorno (1 Año)", 
     "📚 Metodología, Ratios & Score"
 ])
@@ -264,31 +281,35 @@ with tab1:
     m4.metric("Descuento Promedio vs Máx 365D", desc_medio)
 
     st.markdown("---")
-    st.subheader("⚡ Mega-Grid de Valoración y Oportunidades")
+    st.subheader(f"⚡ Mega-Grid de Valoración ({len(df_filtrado)} Activos Listados)")
     st.caption("💡 Haz clic sobre cualquier encabezado de columna para ordenar de mayor a menor.")
 
+    columnas_ordenadas = [
+        "Ticker", "Nombre", "Sector", "Score_Total_%", 
+        "Precio_Actual", "Chg_Dia_%", "Chg_Semana_%", "Chg_Mes_%",
+        "Dif_%_vs_Max", "Dif_%_vs_Min", "Upside_B1_%",
+        "PE_Actual", "PEG_Ratio", "Upside_B2_%",
+        "Margen_Op_%", "Upside_B3_%",
+        "Crec_EPS_%", "Crec_Ventas_%", "Upside_B4_%",
+        "Target_WallSt", "Upside_B5_%"
+    ]
+
     st.dataframe(
-        df_filtrado[[
-            "Ticker", "Nombre", "Sector", "Score_Total_%", 
-            "Precio_Actual", "Max_365D", "Min_365D", "Dif_%_vs_Max", "Dif_%_vs_Min", "Upside_B1_%",
-            "PE_Actual", "PEG_Ratio", "Upside_B2_%",
-            "Margen_Op_%", "Upside_B3_%",
-            "Crec_EPS_%", "Crec_Ventas_%", "Upside_B4_%",
-            "Target_WallSt", "Upside_B5_%"
-        ]],
+        df_filtrado[columnas_ordenadas],
         use_container_width=True,
-        height=580,
+        height=850,
         column_config={
             "Score_Total_%": st.column_config.ProgressColumn(
-                "⭐ Score Upside Total",
+                "⭐ Score Upside",
                 help="Score ponderado de retorno estimado a 1 año (30% B4, 25% B5, 20% B3, 15% B2, 10% B1)",
                 format="%.2f%%",
                 min_value=0,
                 max_value=60,
             ),
-            "Precio_Actual": st.column_config.NumberColumn("Precio ($ USD)", format="$%.2f"),
-            "Max_365D": st.column_config.NumberColumn("Máx 365D", format="$%.2f"),
-            "Min_365D": st.column_config.NumberColumn("Mín 365D", format="$%.2f"),
+            "Precio_Actual": st.column_config.NumberColumn("Precio Hoy ($ USD)", format="$%.2f"),
+            "Chg_Dia_%": st.column_config.NumberColumn("% Día", format="%+.2f%%"),
+            "Chg_Semana_%": st.column_config.NumberColumn("% Semana (5D)", format="%+.2f%%"),
+            "Chg_Mes_%": st.column_config.NumberColumn("% Mes (21D)", format="%+.2f%%"),
             "Dif_%_vs_Max": st.column_config.NumberColumn("Dif % Máx", format="%.2f%%"),
             "Dif_%_vs_Min": st.column_config.NumberColumn("Dif % Mín", format="+%.2f%%"),
             "Upside_B1_%": st.column_config.NumberColumn("B1 Precio", format="+%.2f%%"),
@@ -308,11 +329,17 @@ with tab1:
 
     st.markdown("---")
     st.subheader("🔬 Radiografía Detallada de Activo")
-    t_focus = st.selectbox("Selecciona un activo para ver sus 5 bloques:", df_filtrado["Ticker"].unique())
+    t_focus = st.selectbox("Selecciona un activo para ver sus métricas Sniper y 5 Bloques:", df_filtrado["Ticker"].unique())
     f_focus = df_filtrado[df_filtrado["Ticker"] == t_focus].iloc[0]
 
+    c_snip1, c_snip2, c_snip3, c_snip4 = st.columns(4)
+    c_snip1.metric("Precio Actual", f"${f_focus['Precio_Actual']} USD")
+    c_snip2.metric("Rendimiento Hoy", f"{f_focus['Chg_Dia_%']:+.2f}%")
+    c_snip3.metric("Rendimiento 5 Días", f"{f_focus['Chg_Semana_%']:+.2f}%")
+    c_snip4.metric("Rendimiento 1 Mes", f"{f_focus['Chg_Mes_%']:+.2f}%")
+
     c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("B1: Reversión Precio", f"+{f_focus['Upside_B1_%']}%", f"Precio: ${f_focus['Precio_Actual']} USD")
+    c1.metric("B1: Reversión Precio", f"+{f_focus['Upside_B1_%']}%", f"Máx: ${f_focus['Max_365D']}")
     c2.metric("B2: Expansión P/E", f"+{f_focus['Upside_B2_%']}%", f"P/E: {f_focus['PE_Actual']}x")
     c3.metric("B3: Eficiencia & Caja", f"+{f_focus['Upside_B3_%']}%", f"Margen Op: {f_focus['Margen_Op_%']}%")
     c4.metric("B4: Crecimiento", f"+{f_focus['Upside_B4_%']}%", f"EPS YoY: +{f_focus['Crec_EPS_%']}%")
@@ -369,8 +396,6 @@ with tab2:
             <p style="font-size: 22px; margin-bottom: 0;">💼 <b>Capital Total Final Estimado:</b> <span style="color: #FFFFFF; font-weight: bold;">${capital_final:,.2f} USD</span></p>
         </div>
         """, unsafe_allow_html=True)
-
-        st.caption("📌 *Nota:* La proyección asume la convergencia de valoración basada en los 5 bloques cuantitativos a un horizonte de 365 días.")
 
 # =========================================================
 # PESTAÑA 3: METODOLOGÍA, RATIOS & CONSTRUCCIÓN DEL SCORE
@@ -432,11 +457,3 @@ with tab3:
         * **Target Price Promedio:** El valor razonable estimado por el consenso de analistas de inversión.
         * **Upside $B_5$:** Diferencia porcentual entre el precio actual y el precio objetivo medio de Wall Street.
         """)
-
-    st.markdown("---")
-    st.markdown("### 🛡️ Arquetipos de Cálculo para Casos Especiales")
-    st.markdown("""
-    * **Criptoactivos (`CRYPTO_CYCLE`):** Sustituye P/E y balances por **Descuento vs ATH (35%)**, **Distancia a SMA 200 (25%)**, **RSI / Momentum (20%)** y **Consenso de Fondos (20%)**.
-    * **Materias Primas & Futuros (`COMMODITY_MACRO`):** Evalúa **Rango Anual 365D (30%)**, **Desviación SMA 200 (25%)**, **Sobreventa RSI (25%)** y **Curva Forward / Consenso Macro (20%)**.
-    * **Biotech Temprana & Cuántica (`GROWTH_PRE_PROFIT`):** Sustituye P/E por **EV/Sales**, monitorea **Posición Neta de Caja (*Cash Runway*)** y prioriza el crecimiento de ingresos y el consenso de analistas.
-    """)
