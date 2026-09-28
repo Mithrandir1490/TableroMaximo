@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 from concurrent.futures import ThreadPoolExecutor
-import time
 from datetime import datetime
+import time
 
 # ---------------------------------------------------------
 # CONFIGURACIÓN DE PÁGINA ANCHA (TERMINAL STYLE)
@@ -318,7 +318,7 @@ UNIVERSO = [
 ]
 
 # ---------------------------------------------------------
-# 2. MOTOR DE EXTRACCIÓN BLINDADO CONTRA FALLOS DE YFINANCE
+# 2. MOTOR DE EXTRACCIÓN Y CÁLCULO EN PARALELO
 # ---------------------------------------------------------
 def procesar_ticker_individual(item):
     sym = item["ticker"]
@@ -326,8 +326,7 @@ def procesar_ticker_individual(item):
     
     try:
         tk = yf.Ticker(sym)
-        # Prevención de rate-limit y baneos de IP de Yahoo Finance
-        time.sleep(0.1) 
+        time.sleep(0.1)  # Prevenir Rate Limit de Yahoo Finance
         hist = tk.history(period="1y")
         
         if hist.empty or len(hist) < 10:
@@ -347,7 +346,6 @@ def procesar_ticker_individual(item):
         dif_vs_min = ((precio_actual - min_365) / min_365) * 100
         upside_b1 = max(0.0, ((max_365 - precio_actual) / precio_actual) * 100)
         
-        # EXTRACCIÓN BLINDADA FUNDAMENTALES (Sin caídas silenciosas a 0.0)
         if arq == "CRYPTO_CYCLE" or "USD" in sym:
             pe_actual, peg_ratio = np.nan, np.nan
             margen_op, crec_ventas, crec_eps = 50.0, 50.0, 50.0 
@@ -398,13 +396,12 @@ def procesar_ticker_individual(item):
             "Upside_B4_%": round(upside_b4, 2),
             "Target_WallSt": round(target_price, 2), "Upside_B5_%": round(upside_b5, 2),
         }
-    except Exception as e:
-        # Silenciar el log individual en la app para no ensuciar la salida
+    except Exception:
         return None
 
 @st.cache_data(ttl=600)
 def cargar_datos_universo():
-    # max_workers reducido a 5 para garantizar la extracción estable y no reventar la memoria RAM de Streamlit
+    # Hilos reducidos a 5 para evitar crash de RAM en Streamlit
     with ThreadPoolExecutor(max_workers=5) as executor:
         resultados = list(executor.map(procesar_ticker_individual, UNIVERSO))
     filas = [r for r in resultados if r is not None]
@@ -416,7 +413,7 @@ def cargar_datos_universo():
 st.title("🏛️ TABLERO MÁXIMO | SNIPER & COCKPIT TOTAL")
 st.caption("Detección Cuantitativa de Asimetrías, Clasificación Sniper de 5 Escalas & Monitor Intradía")
 
-with st.spinner("Descargando activos y computando métricas (Conexión Blindada)..."):
+with st.spinner("Descargando 262 activos en paralelo y computando métricas..."):
     df_raw = cargar_datos_universo()
 
 # ---------------------------------------------------------
@@ -483,14 +480,13 @@ with tab1:
     ]
 
     st.download_button(
-        label="📥 Descargar Tablero en CSV (Exportación Institucional)",
+        label="📥 Descargar Tablero en CSV",
         data=df_filtrado[columnas_ordenadas].to_csv(index=False).encode('utf-8'),
         file_name=f"{datetime.today().strftime('%Y-%m-%dT%H-%M')}_export.csv",
         mime="text/csv",
         use_container_width=True
     )
 
-    # Bloque st.dataframe limpio, sin dobles porcentajes (%%) que reventaban el javascript
     st.dataframe(
         df_filtrado[columnas_ordenadas],
         use_container_width=True,
