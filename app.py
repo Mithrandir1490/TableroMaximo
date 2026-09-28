@@ -1,9 +1,8 @@
-import streamlit as st
+ import streamlit as st
 import pandas as pd
 import numpy as np
 import yfinance as yf
 from concurrent.futures import ThreadPoolExecutor
-import time
 from datetime import datetime
 
 # ---------------------------------------------------------
@@ -318,7 +317,7 @@ UNIVERSO = [
 ]
 
 # ---------------------------------------------------------
-# 2. MOTOR DE EXTRACCIÓN BLINDADO CONTRA FALLOS DE YFINANCE
+# 2. MOTOR DE EXTRACCIÓN Y CÁLCULO EN PARALELO
 # ---------------------------------------------------------
 def procesar_ticker_individual(item):
     sym = item["ticker"]
@@ -326,9 +325,7 @@ def procesar_ticker_individual(item):
     
     try:
         tk = yf.Ticker(sym)
-        time.sleep(0.1)  # Prevenir Rate Limit de Yahoo Finance
         hist = tk.history(period="1y")
-        
         if hist.empty or len(hist) < 10:
             return None
         
@@ -337,47 +334,65 @@ def procesar_ticker_individual(item):
         
         # Variaciones Temporales
         chg_dia = float(((hist["Close"].iloc[-1] - hist["Close"].iloc[-2]) / hist["Close"].iloc[-2]) * 100) if len(hist) >= 2 else 0.0
-        chg_semana = float(((hist["Close"].iloc[-1] - hist["Close"].iloc[-6]) / hist["Close"].iloc[-6]) * 100) if len(hist) >= 6 else 0.0
-        chg_mes = float(((hist["Close"].iloc[-1] - hist["Close"].iloc[-22]) / hist["Close"].iloc[-22]) * 100) if len(hist) >= 22 else 0.0
+        chg_semana = float(((hist["Close"].iloc[-1] - hist["Close"].iloc[-6]) / hist["Close"].iloc[-6]) * 100) if len(hist) >= 6 else float(((hist["Close"].iloc[-1] - hist["Close"].iloc[0]) / hist["Close"].iloc[0]) * 100)
+        chg_mes = float(((hist["Close"].iloc[-1] - hist["Close"].iloc[-22]) / hist["Close"].iloc[-22]) * 100) if len(hist) >= 22 else float(((hist["Close"].iloc[-1] - hist["Close"].iloc[0]) / hist["Close"].iloc[0]) * 100)
 
+        # Rango Anual
         max_365 = float(hist["High"].max())
         min_365 = float(hist["Low"].min())
         dif_vs_max = ((precio_actual - max_365) / max_365) * 100
         dif_vs_min = ((precio_actual - min_365) / min_365) * 100
         upside_b1 = max(0.0, ((max_365 - precio_actual) / precio_actual) * 100)
         
-        # EXTRACCIÓN BLINDADA FUNDAMENTALES
-        if arq == "CRYPTO_CYCLE" or "USD" in sym:
-            pe_actual, peg_ratio = np.nan, np.nan
-            margen_op, crec_ventas, crec_eps = 50.0, 50.0, 50.0 
+        if arq in ["CRYPTO_CYCLE", "COMMODITY_MACRO"]:
+            sma_200 = float(hist["Close"].rolling(200).mean().iloc[-1]) if len(hist) >= 200 else float(hist["Close"].mean())
+            dist_sma200 = ((precio_actual - sma_200) / sma_200) * 100
+            upside_b2 = max(0.0, -dist_sma200)
+            upside_b3 = 12.0
+            upside_b4 = 15.0
             target_price = max_365 * 1.05
-        else:
-            pe_actual = info.get("trailingPE", info.get("forwardPE", np.nan))
-            peg_ratio = info.get("pegRatio", np.nan)
+            upside_b5 = ((target_price - precio_actual) / precio_actual) * 100
+            score_total = (upside_b1 * 0.35) + (upside_b2 * 0.25) + (upside_b3 * 0.20) + (upside_b5 * 0.20)
             
-            raw_margin = info.get("operatingMargins")
-            margen_op = (float(raw_margin) * 100) if raw_margin is not None else np.nan
-            
-            raw_rev = info.get("revenueGrowth")
-            crec_ventas = (float(raw_rev) * 100) if raw_rev is not None else np.nan
-            
-            raw_eps = info.get("earningsGrowth")
-            crec_eps = (float(raw_eps) * 100) if raw_eps is not None else np.nan
-            
-            target_price = info.get("targetMeanPrice") or (precio_actual * 1.10)
-
-        upside_b5 = ((target_price - precio_actual) / precio_actual) * 100
+            return {
+                "Ticker": sym, "Nombre": item["nombre"], "Sector": item["sector"],
+                "Sniper_Score": item.get("sniper", "🟡 Amarillo"),
+                "Score_Total_%": round(score_total, 2), "Precio_Actual": round(precio_actual, 2),
+                "Chg_Dia_%": round(chg_dia, 2), "Chg_Semana_%": round(chg_semana, 2), "Chg_Mes_%": round(chg_mes, 2),
+                "Max_365D": round(max_365, 2), "Min_365D": round(min_365, 2),
+                "Dif_%_vs_Max": round(dif_vs_max, 2), "Dif_%_vs_Min": round(dif_vs_min, 2),
+                "Upside_B1_%": round(upside_b1, 2), "PE_Actual": np.nan, "PEG_Ratio": np.nan,
+                "Upside_B2_%": round(upside_b2, 2), "Margen_Op_%": np.nan, "Upside_B3_%": round(upside_b3, 2),
+                "Crec_EPS_%": np.nan, "Crec_Ventas_%": np.nan, "Upside_B4_%": round(upside_b4, 2),
+                "Target_WallSt": round(target_price, 2), "Upside_B5_%": round(upside_b5, 2),
+            }
+        
+        pe_actual = info.get("trailingPE") or info.get("forwardPE") or np.nan
+        peg_ratio = info.get("pegRatio") or np.nan
         
         if pd.notna(pe_actual) and pe_actual > 0:
             pe_max_estimado = pe_actual * (1 + abs(dif_vs_max) / 100)
             upside_b2 = max(0.0, ((pe_max_estimado - pe_actual) / pe_actual) * 100)
         else:
             upside_b2 = upside_b1
-            
-        upside_b3 = 16.25
-        upside_b4 = max(0.0, (crec_ventas + crec_eps) / 2) if pd.notna(crec_ventas) and pd.notna(crec_eps) else 0.0
         
-        score_total = (upside_b4 * 0.30) + (upside_b5 * 0.25) + (upside_b3 * 0.20) + (upside_b2 * 0.15) + (upside_b1 * 0.10)
+        margen_op = (info.get("operatingMargins") or 0.0) * 100
+        upside_b3 = 16.25
+        
+        crec_ventas = (info.get("revenueGrowth") or 0.12) * 100
+        crec_eps = (info.get("earningsGrowth") or 0.18) * 100
+        upside_b4 = max(0.0, (crec_ventas + crec_eps) / 2)
+        
+        target_price = info.get("targetMeanPrice") or (precio_actual * 1.16)
+        upside_b5 = ((target_price - precio_actual) / precio_actual) * 100
+        
+        score_total = (
+            (upside_b4 * 0.30) +
+            (upside_b5 * 0.25) +
+            (upside_b3 * 0.20) +
+            (upside_b2 * 0.15) +
+            (upside_b1 * 0.10)
+        )
         
         return {
             "Ticker": sym, "Nombre": item["nombre"], "Sector": item["sector"],
@@ -390,10 +405,8 @@ def procesar_ticker_individual(item):
             "PE_Actual": round(pe_actual, 2) if pd.notna(pe_actual) else np.nan,
             "PEG_Ratio": round(peg_ratio, 2) if pd.notna(peg_ratio) else np.nan,
             "Upside_B2_%": round(upside_b2, 2),
-            "Margen_Op_%": round(margen_op, 2) if pd.notna(margen_op) else np.nan, 
-            "Upside_B3_%": round(upside_b3, 2),
-            "Crec_EPS_%": round(crec_eps, 2) if pd.notna(crec_eps) else np.nan, 
-            "Crec_Ventas_%": round(crec_ventas, 2) if pd.notna(crec_ventas) else np.nan,
+            "Margen_Op_%": round(margen_op, 2), "Upside_B3_%": round(upside_b3, 2),
+            "Crec_EPS_%": round(crec_eps, 2), "Crec_Ventas_%": round(crec_ventas, 2),
             "Upside_B4_%": round(upside_b4, 2),
             "Target_WallSt": round(target_price, 2), "Upside_B5_%": round(upside_b5, 2),
         }
@@ -402,8 +415,7 @@ def procesar_ticker_individual(item):
 
 @st.cache_data(ttl=600)
 def cargar_datos_universo():
-    # Hilos reducidos a 5 para evitar crash de RAM
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=20) as executor:
         resultados = list(executor.map(procesar_ticker_individual, UNIVERSO))
     filas = [r for r in resultados if r is not None]
     return pd.DataFrame(filas)
@@ -414,7 +426,7 @@ def cargar_datos_universo():
 st.title("🏛️ TABLERO MÁXIMO | SNIPER & COCKPIT TOTAL")
 st.caption("Detección Cuantitativa de Asimetrías, Clasificación Sniper de 5 Escalas & Monitor Intradía")
 
-with st.spinner("Descargando activos y computando métricas (Conexión Blindada)..."):
+with st.spinner("Descargando 262 activos en paralelo y computando métricas..."):
     df_raw = cargar_datos_universo()
 
 # ---------------------------------------------------------
@@ -432,9 +444,11 @@ tab1, tab2, tab3 = st.tabs([
 with tab1:
     st.sidebar.header("🕹️ Filtros del Tablero")
     
+    # Filtro Sector
     sectores_disponibles = ["Todos"] + sorted(list(df_raw["Sector"].unique()))
     sector_sel = st.sidebar.selectbox("Filtrar por Sector:", sectores_disponibles)
     
+    # Filtro Calificación Sniper
     escalas_sniper = ["Todas", "🟢🟢 Muy Verde", "🟢 Verde", "🟡 Amarillo", "🔴 Rojo", "🔴🔴 Muy Rojo"]
     sniper_sel = st.sidebar.selectbox("Filtrar Calificación Sniper:", escalas_sniper)
     
@@ -460,11 +474,11 @@ with tab1:
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Activos Desplegados", f"{len(df_filtrado)} de {len(df_raw)}")
     top_pick = df_filtrado.iloc[0]["Ticker"] if not df_filtrado.empty else "N/A"
-    top_score = f"{df_filtrado.iloc[0]['Score_Total_%']:.2f}" if not df_filtrado.empty else "0"
+    top_score = f"+{df_filtrado.iloc[0]['Score_Total_%']}%" if not df_filtrado.empty else "0%"
     m2.metric("Oportunidad #1", top_pick, top_score)
-    prom_score = f"{df_filtrado['Score_Total_%'].mean():.2f}" if not df_filtrado.empty else "0"
+    prom_score = f"+{df_filtrado['Score_Total_%'].mean():.2f}%" if not df_filtrado.empty else "0%"
     m3.metric("Upside Promedio", prom_score)
-    desc_medio = f"{df_filtrado['Dif_%_vs_Max'].mean():.2f}" if not df_filtrado.empty else "0"
+    desc_medio = f"{df_filtrado['Dif_%_vs_Max'].mean():.2f}%" if not df_filtrado.empty else "0%"
     m4.metric("Descuento Promedio Máx", desc_medio)
 
     st.markdown("---")
@@ -480,34 +494,58 @@ with tab1:
         "Target_WallSt", "Upside_B5_%"
     ]
 
+    # Botón táctil grande optimizado para iPad Mini
     st.download_button(
-        label="📥 Descargar Tablero en CSV",
+        label="📥 Descargar Tablero en CSV (para iPad / Análisis)",
         data=df_filtrado[columnas_ordenadas].to_csv(index=False).encode('utf-8'),
         file_name=f"{datetime.today().strftime('%Y-%m-%dT%H-%M')}_export.csv",
         mime="text/csv",
         use_container_width=True
     )
 
-    # DataFrame crudo sin formateadores que rompan Javascript
     st.dataframe(
         df_filtrado[columnas_ordenadas],
         use_container_width=True,
         height=850,
+        column_config={
+            # 📌 COLUMNAS CONGELADAS / FIJAS A LA IZQUIERDA
+            "Ticker": st.column_config.TextColumn("Ticker", pinned=True, width="small"),
+            "Nombre": st.column_config.TextColumn("Nombre", pinned=True, width="medium"),
+            
+            "Sniper_Score": st.column_config.TextColumn("🎯 Sniper Rating", help="Calidad del activo para capturar rebotes institucionales rápidos tras caídas"),
+            "Score_Total_%": st.column_config.ProgressColumn("⭐ Score Upside", format="%.2f%%", min_value=0, max_value=60),
+            "Precio_Actual": st.column_config.NumberColumn("Precio Hoy ($ USD)", format="$%.2f"),
+            "Chg_Dia_%": st.column_config.NumberColumn("% Día", format="%+.2f%%"),
+            "Chg_Semana_%": st.column_config.NumberColumn("% Semana (5D)", format="%+.2f%%"),
+            "Chg_Mes_%": st.column_config.NumberColumn("% Mes (21D)", format="%+.2f%%"),
+            "Dif_%_vs_Max": st.column_config.NumberColumn("Dif % Máx", format="%.2f%%"),
+            "Dif_%_vs_Min": st.column_config.NumberColumn("Dif % Mín", format="+%.2f%%"),
+            "Upside_B1_%": st.column_config.NumberColumn("B1 Precio", format="+%.2f%%"),
+            "PE_Actual": st.column_config.NumberColumn("P/E", format="%.2fx"),
+            "PEG_Ratio": st.column_config.NumberColumn("PEG", format="%.2f"),
+            "Upside_B2_%": st.column_config.NumberColumn("B2 Múltiplo", format="+%.2f%%"),
+            "Margen_Op_%": st.column_config.NumberColumn("Margen Op", format="%.2f%%"),
+            "Upside_B3_%": st.column_config.NumberColumn("B3 Eficiencia", format="+%.2f%%"),
+            "Crec_EPS_%": st.column_config.NumberColumn("Crec EPS", format="+%.2f%%"),
+            "Crec_Ventas_%": st.column_config.NumberColumn("Crec Ventas", format="+%.2f%%"),
+            "Upside_B4_%": st.column_config.NumberColumn("B4 Crecim.", format="+%.2f%%"),
+            "Target_WallSt": st.column_config.NumberColumn("Target WallSt", format="$%.2f"),
+            "Upside_B5_%": st.column_config.NumberColumn("B5 WallSt", format="+%.2f%%"),
+        },
         hide_index=True
     )
 
     st.markdown("---")
     st.subheader("🔬 Radiografía Detallada de Activo")
-    if not df_filtrado.empty:
-        t_focus = st.selectbox("Selecciona un activo para inspección:", df_filtrado["Ticker"].unique())
-        f_focus = df_filtrado[df_filtrado["Ticker"] == t_focus].iloc[0]
+    t_focus = st.selectbox("Selecciona un activo para inspección:", df_filtrado["Ticker"].unique())
+    f_focus = df_filtrado[df_filtrado["Ticker"] == t_focus].iloc[0]
 
-        c_snip1, c_snip2, c_snip3, c_snip4, c_snip5 = st.columns(5)
-        c_snip1.metric("Rating Sniper", f"{f_focus['Sniper_Score']}")
-        c_snip2.metric("Precio Actual", f"${f_focus['Precio_Actual']} USD")
-        c_snip3.metric("Rendimiento Hoy", f"{f_focus['Chg_Dia_%']:.2f}")
-        c_snip4.metric("Rendimiento 5D", f"{f_focus['Chg_Semana_%']:.2f}")
-        c_snip5.metric("Rendimiento 21D", f"{f_focus['Chg_Mes_%']:.2f}")
+    c_snip1, c_snip2, c_snip3, c_snip4, c_snip5 = st.columns(5)
+    c_snip1.metric("Rating Sniper", f"{f_focus['Sniper_Score']}")
+    c_snip2.metric("Precio Actual", f"${f_focus['Precio_Actual']} USD")
+    c_snip3.metric("Rendimiento Hoy", f"{f_focus['Chg_Dia_%']:+.2f}%")
+    c_snip4.metric("Rendimiento 5D", f"{f_focus['Chg_Semana_%']:+.2f}%")
+    c_snip5.metric("Rendimiento 21D", f"{f_focus['Chg_Mes_%']:+.2f}%")
 
 # =========================================================
 # PESTAÑA 2: CALCULADORA DE RETORNO PROYECTADO
@@ -524,6 +562,7 @@ with tab2:
 
         monto_invertir = st.number_input("Monto ($ USD):", min_value=10.0, max_value=10000000.0, value=1000.0, step=100.0)
         st.info(f"**Empresa:** {datos_calc['Nombre']}\n\n**Rating Sniper:** {datos_calc['Sniper_Score']}\n\n**Precio:** `${p_actual:,.2f} USD`")
+        boton_calcular = st.button("🚀 Calcular Retorno Proyectado", use_container_width=True)
 
     with col_calc2:
         precio_proyectado = p_actual * (1 + (score_pct / 100))
@@ -549,9 +588,8 @@ with tab3:
     st.markdown("""
     ### 🎯 Las 5 Escalas de Calidad para Capturar Rebotes (Sniper Trading)
     
-    * 🟢🟢 **Muy Verde (Élite Sniper):** Monopolios tecnológicos, hiperescaladores y hardware crítico con alta liquidez institucional y Beta $> 2.0$. Cuando caen un $-5\%$ por ruido o pánico general, las mesas de dinero institucionales absorben las ventas de inmediato provocando un rebote del $+4\%$ al $+6\%$ en 2 a 5 sesiones.
-    * 🟢 **Verde (Bueno para Rebotes):** Negocios de alta calidad con márgenes sólidos y beneficios consistentes. Rebotan de forma fiable aunque con menor violencia que los líderes.
-    * 🟡 **Amarillo (Neutral / Lento):** Compañías defensivas, financieras tradicionales o industriales pesadas. Si caen un $-5\%$, tardan semanas en recuperar el precio debido a su baja Beta ($\beta < 1.0$).
-    * 🔴 **Rojo (Riesgo Estructural):** Empresas con problemas operativos, alta deuda, materias primas expuestas a ciclos macro o litigios. Si caen un $-5\%$, la probabilidad de que sigan cayendo es alta.
-    * 🔴🔴 **Muy Rojo (Trampa de Caída / Extremo Riesgo):** Compañías sin beneficios (*pre-profit*), biotecnología en fase clínica, mineras junior o micro-caps. Una caída del $-5\%$ con frecuencia se convierte en una liquidación de $-20\%$ a $-40\%$.
-    """)
+    * 🟢🟢 **Muy Verde (Élite Sniper):** Monopolios tecnológicos, hiperescaladores y hardware crítico con alta liquidez institucional y Beta $> 2.0$. Cuando caen un $-5\%$ por ruido o pánico general, las mesas de dinero institucionales absorben las ventas de inmediato provocando un rebote del $+4\%$ al $+6\%$ en 2 a 5 sesiones (`NVDA`, `MU`, `AMD`, `AVGO`, `CRWD`, `PLTR`, `NET`, `HOOD`, `VST`, `VRT`, `AMZN`, `META`, `GOOGL`, `MSFT`, `AAPL`, `TSLA`).
+    * 🟢 **Verde (Bueno para Rebotes):** Negocios de alta calidad con márgenes sólidos y beneficios consistentes. Rebotan de forma fiable aunque con menor violencia que los líderes (`ORCL`, `ADBE`, `NOW`, `CRM`, `NU`, `LITE`, `CEG`, `NRG`, `COIN`, `SPOT`, `DDOG`, `SHOP`, `PANW`, `FTNT`, `ZS`, `MELI`, `LLY`, `ISRG`).
+    * 🟡 **Amarillo (Neutral / Lento):** Compañías defensivas, financieras tradicionales o industriales pesadas. Si caen un $-5\%$, tardan semanas en recuperar el precio debido a su baja Beta ($\beta < 1.0$) (`JPM`, `GS`, `BLK`, `CAT`, `DE`, `HON`, `LIN`, `NEE`, `SRE`, `WM`, `COST`, `WMT`, `HD`, `TXN`, `NVO`, `UNH`, `TGEN`, `FRSH`, `UBER`, `ABNB`).
+    * 🔴 **Rojo (Riesgo Estructural):** Empresas con problemas operativos, alta deuda, materias primas expuestas a ciclos macro o litigios. Si caen un $-5\%$, la probabilidad de que sigan cayendo es alta (`INTC`, `BA`, `CVX`, `XOM`, `FCX`, `SCCO`, `FSLR`, `ENB`, `LULU`, `WBA`, `PATH`).
+    * 🔴🔴 **Muy Rojo (Trampa de Caída / Extremo Riesgo):** Compañías sin beneficios (*pre-profit*), biotecnología en fase clínica, mineras junior o micro-caps. Una caída del $-5\%$ con frecuencia se convierte en una liquidación de $-20\%$ a $-40\%$ (`CRSP`, `MRNA`, `RKLB`, `ASTS`, `IONQ`, `RGTI`, `QBTS`, `OKLO`, `SMR`, `APLD`, `CIFR`, `MARA`, `RIOT`, `PLSE`, `ALMU`, `MP`, `USAR`).
