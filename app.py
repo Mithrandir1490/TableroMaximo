@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
 import time
+from datetime import datetime
 
 # ---------------------------------------------------------
 # CONFIGURACIÓN DE PÁGINA ANCHA (TERMINAL STYLE)
@@ -318,7 +318,7 @@ UNIVERSO = [
 ]
 
 # ---------------------------------------------------------
-# 2. MOTOR DE EXTRACCIÓN Y CÁLCULO EN PARALELO
+# 2. MOTOR DE EXTRACCIÓN BLINDADO CONTRA FALLOS DE YFINANCE
 # ---------------------------------------------------------
 def procesar_ticker_individual(item):
     sym = item["ticker"]
@@ -346,6 +346,7 @@ def procesar_ticker_individual(item):
         dif_vs_min = ((precio_actual - min_365) / min_365) * 100
         upside_b1 = max(0.0, ((max_365 - precio_actual) / precio_actual) * 100)
         
+        # EXTRACCIÓN BLINDADA FUNDAMENTALES
         if arq == "CRYPTO_CYCLE" or "USD" in sym:
             pe_actual, peg_ratio = np.nan, np.nan
             margen_op, crec_ventas, crec_eps = 50.0, 50.0, 50.0 
@@ -401,7 +402,7 @@ def procesar_ticker_individual(item):
 
 @st.cache_data(ttl=600)
 def cargar_datos_universo():
-    # Hilos reducidos a 5 para evitar crash de RAM en Streamlit
+    # Hilos reducidos a 5 para evitar crash de RAM
     with ThreadPoolExecutor(max_workers=5) as executor:
         resultados = list(executor.map(procesar_ticker_individual, UNIVERSO))
     filas = [r for r in resultados if r is not None]
@@ -413,7 +414,7 @@ def cargar_datos_universo():
 st.title("🏛️ TABLERO MÁXIMO | SNIPER & COCKPIT TOTAL")
 st.caption("Detección Cuantitativa de Asimetrías, Clasificación Sniper de 5 Escalas & Monitor Intradía")
 
-with st.spinner("Descargando 262 activos en paralelo y computando métricas..."):
+with st.spinner("Descargando activos y computando métricas (Conexión Blindada)..."):
     df_raw = cargar_datos_universo()
 
 # ---------------------------------------------------------
@@ -459,11 +460,11 @@ with tab1:
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Activos Desplegados", f"{len(df_filtrado)} de {len(df_raw)}")
     top_pick = df_filtrado.iloc[0]["Ticker"] if not df_filtrado.empty else "N/A"
-    top_score = f"+{df_filtrado.iloc[0]['Score_Total_%']:.2f}%" if not df_filtrado.empty else "0%"
+    top_score = f"{df_filtrado.iloc[0]['Score_Total_%']:.2f}" if not df_filtrado.empty else "0"
     m2.metric("Oportunidad #1", top_pick, top_score)
-    prom_score = f"+{df_filtrado['Score_Total_%'].mean():.2f}%" if not df_filtrado.empty else "0%"
+    prom_score = f"{df_filtrado['Score_Total_%'].mean():.2f}" if not df_filtrado.empty else "0"
     m3.metric("Upside Promedio", prom_score)
-    desc_medio = f"{df_filtrado['Dif_%_vs_Max'].mean():.2f}%" if not df_filtrado.empty else "0%"
+    desc_medio = f"{df_filtrado['Dif_%_vs_Max'].mean():.2f}" if not df_filtrado.empty else "0"
     m4.metric("Descuento Promedio Máx", desc_medio)
 
     st.markdown("---")
@@ -487,33 +488,11 @@ with tab1:
         use_container_width=True
     )
 
+    # DataFrame crudo sin formateadores que rompan Javascript
     st.dataframe(
         df_filtrado[columnas_ordenadas],
         use_container_width=True,
         height=850,
-        column_config={
-            "Ticker": st.column_config.TextColumn("Ticker", pinned=True, width="small"),
-            "Nombre": st.column_config.TextColumn("Nombre", pinned=True, width="medium"),
-            "Sniper_Score": st.column_config.TextColumn("🎯 Sniper Rating"),
-            "Score_Total_%": st.column_config.ProgressColumn("⭐ Score Upside", format="%.2f", min_value=0, max_value=60),
-            "Precio_Actual": st.column_config.NumberColumn("Precio Hoy ($ USD)", format="$%.2f"),
-            "Chg_Dia_%": st.column_config.NumberColumn("% Día", format="%.2f"),
-            "Chg_Semana_%": st.column_config.NumberColumn("% Semana", format="%.2f"),
-            "Chg_Mes_%": st.column_config.NumberColumn("% Mes", format="%.2f"),
-            "Dif_%_vs_Max": st.column_config.NumberColumn("Dif % Máx", format="%.2f"),
-            "Dif_%_vs_Min": st.column_config.NumberColumn("Dif % Mín", format="%.2f"),
-            "Upside_B1_%": st.column_config.NumberColumn("B1 Precio", format="%.2f"),
-            "PE_Actual": st.column_config.NumberColumn("P/E", format="%.2f"),
-            "PEG_Ratio": st.column_config.NumberColumn("PEG", format="%.2f"),
-            "Upside_B2_%": st.column_config.NumberColumn("B2 Múltiplo", format="%.2f"),
-            "Margen_Op_%": st.column_config.NumberColumn("Margen Op", format="%.2f"),
-            "Upside_B3_%": st.column_config.NumberColumn("B3 Eficiencia", format="%.2f"),
-            "Crec_EPS_%": st.column_config.NumberColumn("Crec EPS", format="%.2f"),
-            "Crec_Ventas_%": st.column_config.NumberColumn("Crec Ventas", format="%.2f"),
-            "Upside_B4_%": st.column_config.NumberColumn("B4 Crecim.", format="%.2f"),
-            "Target_WallSt": st.column_config.NumberColumn("Target WallSt", format="$%.2f"),
-            "Upside_B5_%": st.column_config.NumberColumn("B5 WallSt", format="%.2f"),
-        },
         hide_index=True
     )
 
@@ -526,9 +505,9 @@ with tab1:
         c_snip1, c_snip2, c_snip3, c_snip4, c_snip5 = st.columns(5)
         c_snip1.metric("Rating Sniper", f"{f_focus['Sniper_Score']}")
         c_snip2.metric("Precio Actual", f"${f_focus['Precio_Actual']} USD")
-        c_snip3.metric("Rendimiento Hoy", f"{f_focus['Chg_Dia_%']:+.2f}%")
-        c_snip4.metric("Rendimiento 5D", f"{f_focus['Chg_Semana_%']:+.2f}%")
-        c_snip5.metric("Rendimiento 21D", f"{f_focus['Chg_Mes_%']:+.2f}%")
+        c_snip3.metric("Rendimiento Hoy", f"{f_focus['Chg_Dia_%']:.2f}")
+        c_snip4.metric("Rendimiento 5D", f"{f_focus['Chg_Semana_%']:.2f}")
+        c_snip5.metric("Rendimiento 21D", f"{f_focus['Chg_Mes_%']:.2f}")
 
 # =========================================================
 # PESTAÑA 2: CALCULADORA DE RETORNO PROYECTADO
