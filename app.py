@@ -22,6 +22,7 @@ st.markdown("""
     .stDataFrame { border-radius: 8px; }
     div[data-testid="stMetricValue"] { font-size: 22px; font-weight: bold; }
     .calc-card { background-color: #1A1C24; padding: 20px; border-radius: 10px; border: 1px solid #2B547E; }
+    .trigger-card { background-color: #2E1A1A; border-left: 5px solid #FF5252; padding: 15px; border-radius: 5px; margin-bottom: 10px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -318,7 +319,7 @@ UNIVERSO = [
 ]
 
 # ---------------------------------------------------------
-# 2. MOTOR DE EXTRACCIÓN Y CÁLCULO EN PARALELO
+# 2. MOTOR DE EXTRACCIÓN Y CÁLCULO DE VOLATILIDAD (Z-SCORE)
 # ---------------------------------------------------------
 def procesar_ticker_individual(item):
     sym = item["ticker"]
@@ -329,16 +330,16 @@ def procesar_ticker_individual(item):
         time.sleep(0.05) # Pausa segura anti-baneos
         hist = tk.history(period="1y")
         
-        if hist.empty or len(hist) < 10:
+        if hist.empty or len(hist) < 25:
             return None
             
         info = tk.info or {}
         precio_actual = float(hist["Close"].iloc[-1])
         
         # Variaciones Temporales
-        chg_dia = float(((hist["Close"].iloc[-1] - hist["Close"].iloc[-2]) / hist["Close"].iloc[-2]) * 100) if len(hist) >= 2 else 0.0
-        chg_semana = float(((hist["Close"].iloc[-1] - hist["Close"].iloc[-6]) / hist["Close"].iloc[-6]) * 100) if len(hist) >= 6 else float(((hist["Close"].iloc[-1] - hist["Close"].iloc[0]) / hist["Close"].iloc[0]) * 100)
-        chg_mes = float(((hist["Close"].iloc[-1] - hist["Close"].iloc[-22]) / hist["Close"].iloc[-22]) * 100) if len(hist) >= 22 else float(((hist["Close"].iloc[-1] - hist["Close"].iloc[0]) / hist["Close"].iloc[0]) * 100)
+        chg_dia = float(((hist["Close"].iloc[-1] - hist["Close"].iloc[-2]) / hist["Close"].iloc[-2]) * 100)
+        chg_semana = float(((hist["Close"].iloc[-1] - hist["Close"].iloc[-6]) / hist["Close"].iloc[-6]) * 100)
+        chg_mes = float(((hist["Close"].iloc[-1] - hist["Close"].iloc[-22]) / hist["Close"].iloc[-22]) * 100)
 
         # Rango Anual
         max_365 = float(hist["High"].max())
@@ -347,31 +348,27 @@ def procesar_ticker_individual(item):
         dif_vs_min = ((precio_actual - min_365) / min_365) * 100
         upside_b1 = max(0.0, ((max_365 - precio_actual) / precio_actual) * 100)
         
-        if arq in ["CRYPTO_CYCLE", "COMMODITY_MACRO"]:
-            sma_200 = float(hist["Close"].rolling(200).mean().iloc[-1]) if len(hist) >= 200 else float(hist["Close"].mean())
-            dist_sma200 = ((precio_actual - sma_200) / sma_200) * 100
-            upside_b2 = max(0.0, -dist_sma200)
-            upside_b3 = 12.0
-            upside_b4 = 15.0
+        # NUEVO: CÁLCULO DE VOLATILIDAD DINÁMICA (Z-SCORE 20 DÍAS)
+        sma_20 = float(hist["Close"].rolling(window=20).mean().iloc[-1])
+        std_20 = float(hist["Close"].rolling(window=20).std().iloc[-1])
+        z_score_20d = ((precio_actual - sma_20) / std_20) if std_20 > 0 else 0.0
+
+        if arq in ["CRYPTO_CYCLE", "COMMODITY_MACRO"] or "USD" in sym:
+            pe_actual, peg_ratio = np.nan, np.nan
+            margen_op, crec_ventas, crec_eps = 50.0, 50.0, 50.0 
             target_price = max_365 * 1.05
-            upside_b5 = ((target_price - precio_actual) / precio_actual) * 100
-            score_total = (upside_b1 * 0.35) + (upside_b2 * 0.25) + (upside_b3 * 0.20) + (upside_b5 * 0.20)
-            
-            return {
-                "Ticker": sym, "Nombre": item["nombre"], "Sector": item["sector"],
-                "Sniper_Score": item.get("sniper", "🟡 Amarillo"),
-                "Score_Total_%": round(score_total, 2), "Precio_Actual": round(precio_actual, 2),
-                "Chg_Dia_%": round(chg_dia, 2), "Chg_Semana_%": round(chg_semana, 2), "Chg_Mes_%": round(chg_mes, 2),
-                "Max_365D": round(max_365, 2), "Min_365D": round(min_365, 2),
-                "Dif_%_vs_Max": round(dif_vs_max, 2), "Dif_%_vs_Min": round(dif_vs_min, 2),
-                "Upside_B1_%": round(upside_b1, 2), "PE_Actual": np.nan, "PEG_Ratio": np.nan,
-                "Upside_B2_%": round(upside_b2, 2), "Margen_Op_%": np.nan, "Upside_B3_%": round(upside_b3, 2),
-                "Crec_EPS_%": np.nan, "Crec_Ventas_%": np.nan, "Upside_B4_%": round(upside_b4, 2),
-                "Target_WallSt": round(target_price, 2), "Upside_B5_%": round(upside_b5, 2),
-            }
-        
-        pe_actual = info.get("trailingPE") or info.get("forwardPE") or np.nan
-        peg_ratio = info.get("pegRatio") or np.nan
+        else:
+            pe_actual = info.get("trailingPE", info.get("forwardPE", np.nan))
+            peg_ratio = info.get("pegRatio", np.nan)
+            raw_margin = info.get("operatingMargins")
+            margen_op = (float(raw_margin) * 100) if raw_margin is not None else np.nan
+            raw_rev = info.get("revenueGrowth")
+            crec_ventas = (float(raw_rev) * 100) if raw_rev is not None else np.nan
+            raw_eps = info.get("earningsGrowth")
+            crec_eps = (float(raw_eps) * 100) if raw_eps is not None else np.nan
+            target_price = info.get("targetMeanPrice") or (precio_actual * 1.10)
+
+        upside_b5 = ((target_price - precio_actual) / precio_actual) * 100
         
         if pd.notna(pe_actual) and pe_actual > 0:
             pe_max_estimado = pe_actual * (1 + abs(dif_vs_max) / 100)
@@ -379,47 +376,31 @@ def procesar_ticker_individual(item):
         else:
             upside_b2 = upside_b1
         
-        margen_op = (info.get("operatingMargins") or 0.0) * 100
         upside_b3 = 16.25
-        
-        crec_ventas = (info.get("revenueGrowth") or 0.12) * 100
-        crec_eps = (info.get("earningsGrowth") or 0.18) * 100
         upside_b4 = max(0.0, (crec_ventas + crec_eps) / 2) if pd.notna(crec_ventas) and pd.notna(crec_eps) else 0.0
         
-        target_price = info.get("targetMeanPrice") or (precio_actual * 1.16)
-        upside_b5 = ((target_price - precio_actual) / precio_actual) * 100
-        
-        score_total = (
-            (upside_b4 * 0.30) +
-            (upside_b5 * 0.25) +
-            (upside_b3 * 0.20) +
-            (upside_b2 * 0.15) +
-            (upside_b1 * 0.10)
-        )
+        score_total = (upside_b4 * 0.30) + (upside_b5 * 0.25) + (upside_b3 * 0.20) + (upside_b2 * 0.15) + (upside_b1 * 0.10)
         
         return {
             "Ticker": sym, "Nombre": item["nombre"], "Sector": item["sector"],
             "Sniper_Score": item.get("sniper", "🟡 Amarillo"),
             "Score_Total_%": round(score_total, 2), "Precio_Actual": round(precio_actual, 2),
             "Chg_Dia_%": round(chg_dia, 2), "Chg_Semana_%": round(chg_semana, 2), "Chg_Mes_%": round(chg_mes, 2),
+            "Z_Score_20D": round(z_score_20d, 2), # NUEVA MÉTRICA
             "Max_365D": round(max_365, 2), "Min_365D": round(min_365, 2),
             "Dif_%_vs_Max": round(dif_vs_max, 2), "Dif_%_vs_Min": round(dif_vs_min, 2),
-            "Upside_B1_%": round(upside_b1, 2),
-            "PE_Actual": round(pe_actual, 2) if pd.notna(pe_actual) else np.nan,
+            "Upside_B1_%": round(upside_b1, 2), "PE_Actual": round(pe_actual, 2) if pd.notna(pe_actual) else np.nan,
             "PEG_Ratio": round(peg_ratio, 2) if pd.notna(peg_ratio) else np.nan,
-            "Upside_B2_%": round(upside_b2, 2),
-            "Margen_Op_%": round(margen_op, 2), "Upside_B3_%": round(upside_b3, 2),
-            "Crec_EPS_%": round(crec_eps, 2) if pd.notna(crec_eps) else np.nan, 
+            "Upside_B2_%": round(upside_b2, 2), "Margen_Op_%": round(margen_op, 2) if pd.notna(margen_op) else np.nan, 
+            "Upside_B3_%": round(upside_b3, 2), "Crec_EPS_%": round(crec_eps, 2) if pd.notna(crec_eps) else np.nan, 
             "Crec_Ventas_%": round(crec_ventas, 2) if pd.notna(crec_ventas) else np.nan,
-            "Upside_B4_%": round(upside_b4, 2),
-            "Target_WallSt": round(target_price, 2), "Upside_B5_%": round(upside_b5, 2),
+            "Upside_B4_%": round(upside_b4, 2), "Target_WallSt": round(target_price, 2), "Upside_B5_%": round(upside_b5, 2),
         }
     except Exception:
         return None
 
 @st.cache_data(ttl=600)
 def cargar_datos_universo():
-    # Hilos a 5 para no saturar memoria en la nube
     with ThreadPoolExecutor(max_workers=5) as executor:
         resultados = list(executor.map(procesar_ticker_individual, UNIVERSO))
     filas = [r for r in resultados if r is not None]
@@ -431,30 +412,61 @@ def cargar_datos_universo():
 st.title("🏛️ TABLERO MÁXIMO | SNIPER & COCKPIT TOTAL")
 st.caption("Detección Cuantitativa de Asimetrías, Clasificación Sniper de 5 Escalas & Monitor Intradía")
 
-with st.spinner("Descargando 262 activos en paralelo y computando métricas..."):
+with st.spinner("Descargando activos, calculando volatilidad (Z-Scores) y computando métricas..."):
     df_raw = cargar_datos_universo()
 
 # ---------------------------------------------------------
 # PESTAÑAS DEL DASHBOARD
 # ---------------------------------------------------------
-tab1, tab2, tab3 = st.tabs([
-    "⚡ Mega-Grid & Oportunidades Sniper", 
+tab_triggers, tab1, tab2, tab3 = st.tabs([
+    "🎯 SEÑALES DE COMPRA (TRIGGERS)",
+    "⚡ Mega-Grid Base", 
     "🧮 Calculadora de Retorno", 
-    "📚 Metodología & 5 Escalas Sniper"
+    "📚 Metodología"
 ])
 
 # =========================================================
-# PESTAÑA 1: MEGA-GRID & ANÁLISIS INTERACTIVO
+# NUEVA PESTAÑA: TRIGGERS OPERATIVOS (OPCIÓN 1 & 2)
+# =========================================================
+with tab_triggers:
+    st.header("🚨 Filtro de Capitulación Dinámica (Z-Score)")
+    st.markdown("El motor cuantitativo aísla matemáticamente los activos de Grado Institucional (Verdes) que sufren hoy una anomalía de desviación estándar (**Z-Score < -1.5**). Estos son los candidatos obligatorios para *Short Swing*.")
+    
+    # Filtro automático duro
+    df_triggers = df_raw[
+        (df_raw['Z_Score_20D'] <= -1.5) & 
+        (df_raw['Precio_Actual'] >= 15.0) & 
+        (df_raw['Sniper_Score'].str.contains('Verde', na=False))
+    ].copy()
+    
+    df_triggers = df_triggers.sort_values(by='Z_Score_20D', ascending=True)
+
+    if df_triggers.empty:
+        st.success("✅ Mercado en Equilibrio: Ningún activo de grado institucional presenta hoy anomalías de pánico para ejecutar rebotes rápidos.")
+    else:
+        for index, row in df_triggers.iterrows():
+            st.markdown(f"""
+            <div class="trigger-card">
+                <h3 style="margin-top:0;">{row['Ticker']} - {row['Nombre']}</h3>
+                <p style="font-size: 18px; margin-bottom: 5px;"><strong>Desviación Estándar (Z-Score):</strong> <span style="color: #FF5252;">{row['Z_Score_20D']:.2f} σ</span> (Anomalía Severa)</p>
+                <p style="margin-bottom: 5px;"><strong>Precio Actual:</strong> ${row['Precio_Actual']:.2f} | <strong>Caída Día:</strong> {row['Chg_Dia_%']:.2f}% | <strong>Caída Semana:</strong> {row['Chg_Semana_%']:.2f}%</p>
+                <p style="margin-bottom: 0px;"><strong>Calidad:</strong> {row['Sniper_Score']} | <strong>Upside Analistas:</strong> +{row['Upside_B5_%']:.2f}%</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.subheader("Datos Crudos de Anomalías")
+        cols_trigger = ['Ticker', 'Sniper_Score', 'Z_Score_20D', 'Precio_Actual', 'Chg_Dia_%', 'Chg_Semana_%', 'Margen_Op_%', 'PEG_Ratio', 'Upside_B5_%']
+        st.dataframe(df_triggers[cols_trigger], use_container_width=True, hide_index=True)
+
+# =========================================================
+# PESTAÑA 1: MEGA-GRID BASE
 # =========================================================
 with tab1:
     st.sidebar.header("🕹️ Filtros del Tablero")
-    
     sectores_disponibles = ["Todos"] + sorted(list(df_raw["Sector"].unique()))
     sector_sel = st.sidebar.selectbox("Filtrar por Sector:", sectores_disponibles)
-    
     escalas_sniper = ["Todas", "🟢🟢 Muy Verde", "🟢 Verde", "🟡 Amarillo", "🔴 Rojo", "🔴🔴 Muy Rojo"]
     sniper_sel = st.sidebar.selectbox("Filtrar Calificación Sniper:", escalas_sniper)
-    
     score_min = st.sidebar.slider("Score Upside Mínimo (%):", min_value=0.0, max_value=60.0, value=0.0, step=1.0)
     busqueda_ticker = st.sidebar.text_input("Buscar Ticker:", "").upper().strip()
 
@@ -463,33 +475,24 @@ with tab1:
         st.rerun()
 
     df_filtrado = df_raw.copy()
-    if sector_sel != "Todos":
-        df_filtrado = df_filtrado[df_filtrado["Sector"] == sector_sel]
-    if sniper_sel != "Todas":
-        df_filtrado = df_filtrado[df_filtrado["Sniper_Score"] == sniper_sel]
-    if score_min > 0:
-        df_filtrado = df_filtrado[df_filtrado["Score_Total_%"] >= score_min]
-    if busqueda_ticker:
-        df_filtrado = df_filtrado[df_filtrado["Ticker"].str.contains(busqueda_ticker)]
+    if sector_sel != "Todos": df_filtrado = df_filtrado[df_filtrado["Sector"] == sector_sel]
+    if sniper_sel != "Todas": df_filtrado = df_filtrado[df_filtrado["Sniper_Score"] == sniper_sel]
+    if score_min > 0: df_filtrado = df_filtrado[df_filtrado["Score_Total_%"] >= score_min]
+    if busqueda_ticker: df_filtrado = df_filtrado[df_filtrado["Ticker"].str.contains(busqueda_ticker)]
 
     df_filtrado = df_filtrado.sort_values(by="Score_Total_%", ascending=False).reset_index(drop=True)
 
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Activos Desplegados", f"{len(df_filtrado)} de {len(df_raw)}")
-    top_pick = df_filtrado.iloc[0]["Ticker"] if not df_filtrado.empty else "N/A"
-    top_score = f"{df_filtrado.iloc[0]['Score_Total_%']:.2f}" if not df_filtrado.empty else "0.00"
-    m2.metric("Oportunidad #1", top_pick, top_score)
-    prom_score = f"{df_filtrado['Score_Total_%'].mean():.2f}" if not df_filtrado.empty else "0.00"
-    m3.metric("Upside Promedio", prom_score)
-    desc_medio = f"{df_filtrado['Dif_%_vs_Max'].mean():.2f}" if not df_filtrado.empty else "0.00"
-    m4.metric("Descuento Promedio Máx", desc_medio)
-
-    st.markdown("---")
-    st.subheader(f"⚡ Mega-Grid de Valoración ({len(df_filtrado)} Activos)")
+    st.download_button(
+        label="📥 Descargar Tablero Completo en CSV",
+        data=df_filtrado.to_csv(index=False).encode('utf-8'),
+        file_name=f"{datetime.today().strftime('%Y-%m-%dT%H-%M')}_export.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
 
     columnas_ordenadas = [
         "Ticker", "Nombre", "Sector", "Sniper_Score", "Score_Total_%", 
-        "Precio_Actual", "Chg_Dia_%", "Chg_Semana_%", "Chg_Mes_%",
+        "Precio_Actual", "Chg_Dia_%", "Chg_Semana_%", "Chg_Mes_%", "Z_Score_20D",
         "Dif_%_vs_Max", "Dif_%_vs_Min", "Upside_B1_%",
         "PE_Actual", "PEG_Ratio", "Upside_B2_%",
         "Margen_Op_%", "Upside_B3_%",
@@ -497,57 +500,7 @@ with tab1:
         "Target_WallSt", "Upside_B5_%"
     ]
 
-    st.download_button(
-        label="📥 Descargar Tablero en CSV",
-        data=df_filtrado[columnas_ordenadas].to_csv(index=False).encode('utf-8'),
-        file_name=f"{datetime.today().strftime('%Y-%m-%dT%H-%M')}_export.csv",
-        mime="text/csv",
-        use_container_width=True
-    )
-
-    # Formateo 100% puro para evitar colapso gráfico
-    st.dataframe(
-        df_filtrado[columnas_ordenadas],
-        use_container_width=True,
-        height=850,
-        column_config={
-            "Ticker": st.column_config.TextColumn("Ticker", pinned=True, width="small"),
-            "Nombre": st.column_config.TextColumn("Nombre", pinned=True, width="medium"),
-            "Sniper_Score": st.column_config.TextColumn("🎯 Sniper Rating"),
-            "Score_Total_%": st.column_config.NumberColumn("⭐ Score Upside"),
-            "Precio_Actual": st.column_config.NumberColumn("Precio Hoy ($)"),
-            "Chg_Dia_%": st.column_config.NumberColumn("% Día"),
-            "Chg_Semana_%": st.column_config.NumberColumn("% Sem"),
-            "Chg_Mes_%": st.column_config.NumberColumn("% Mes"),
-            "Dif_%_vs_Max": st.column_config.NumberColumn("Dif Máx"),
-            "Dif_%_vs_Min": st.column_config.NumberColumn("Dif Mín"),
-            "Upside_B1_%": st.column_config.NumberColumn("B1 Precio"),
-            "PE_Actual": st.column_config.NumberColumn("P/E"),
-            "PEG_Ratio": st.column_config.NumberColumn("PEG"),
-            "Upside_B2_%": st.column_config.NumberColumn("B2 Múltiplo"),
-            "Margen_Op_%": st.column_config.NumberColumn("Margen Op"),
-            "Upside_B3_%": st.column_config.NumberColumn("B3 Efic."),
-            "Crec_EPS_%": st.column_config.NumberColumn("Crec EPS"),
-            "Crec_Ventas_%": st.column_config.NumberColumn("Crec Ventas"),
-            "Upside_B4_%": st.column_config.NumberColumn("B4 Crec."),
-            "Target_WallSt": st.column_config.NumberColumn("Target WSt"),
-            "Upside_B5_%": st.column_config.NumberColumn("B5 WSt"),
-        },
-        hide_index=True
-    )
-
-    st.markdown("---")
-    st.subheader("🔬 Radiografía Detallada de Activo")
-    if not df_filtrado.empty:
-        t_focus = st.selectbox("Selecciona un activo para inspección:", df_filtrado["Ticker"].unique())
-        f_focus = df_filtrado[df_filtrado["Ticker"] == t_focus].iloc[0]
-
-        c_snip1, c_snip2, c_snip3, c_snip4, c_snip5 = st.columns(5)
-        c_snip1.metric("Rating Sniper", f"{f_focus['Sniper_Score']}")
-        c_snip2.metric("Precio Actual", f"${f_focus['Precio_Actual']:.2f}")
-        c_snip3.metric("Rendimiento Hoy", f"{f_focus['Chg_Dia_%']:.2f}%")
-        c_snip4.metric("Rendimiento 5D", f"{f_focus['Chg_Semana_%']:.2f}%")
-        c_snip5.metric("Rendimiento 21D", f"{f_focus['Chg_Mes_%']:.2f}%")
+    st.dataframe(df_filtrado[columnas_ordenadas], use_container_width=True, height=750, hide_index=True)
 
 # =========================================================
 # PESTAÑA 2: CALCULADORA DE RETORNO PROYECTADO
